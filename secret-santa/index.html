@@ -1,0 +1,1449 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>シークレットサンタ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg-deep:#0a2115;
+        --bg-green:#123524;
+        --card:#fffaf1;
+        --card-ink:#33241a;
+        --ink-on-green:#fdf6e9;
+        --muted-on-green:#cfe3d2;
+        --red:#d64541;
+        --red-dark:#b03330;
+        --green-btn:#1e7a46;
+        --green-btn-dark:#155c33;
+        --gold:#f2c14e;
+        --gold-dark:#d9a92f;
+        --line:#e7d9c3;
+        --shadow:0 10px 30px rgba(0,0,0,.35);
+        --radius:18px;
+      }
+      *{ box-sizing:border-box; }
+      html,body{ margin:0; padding:0; }
+      body{
+        font-family:"M PLUS Rounded 1c", system-ui, -apple-system, "Hiragino Maru Gothic ProN", sans-serif;
+        color:var(--ink-on-green);
+        background:
+          radial-gradient(1200px 600px at 85% -10%, rgba(242,193,78,.16), transparent 60%),
+          radial-gradient(900px 500px at -10% 20%, rgba(214,69,65,.14), transparent 55%),
+          linear-gradient(180deg, var(--bg-green), var(--bg-deep) 70%);
+        min-height:100vh;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button, [role="button"], select, summary,
+      input:not([type="checkbox"], [type="radio"]) { min-height:2.25rem; }
+      button{ font-family:inherit; cursor:pointer; }
+      input, select, textarea{ font-family:inherit; }
+
+      /* ---------- snow ---------- */
+      #snow{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:1; }
+      .flake{ position:absolute; top:-4vh; color:#fff; opacity:.85; animation:fall linear infinite; text-shadow:0 0 6px rgba(255,255,255,.6); }
+      @keyframes fall{
+        0%{ transform:translate3d(0,-4vh,0) rotate(0deg); }
+        100%{ transform:translate3d(var(--drift,20px),104vh,0) rotate(320deg); }
+      }
+      @media (prefers-reduced-motion: reduce){
+        .flake{ animation:none; display:none; }
+        *{ animation-duration:.001s !important; transition-duration:.001s !important; }
+      }
+
+      /* ---------- garland lights ---------- */
+      .garland{ display:flex; justify-content:center; gap:14px; padding:10px 0 0; position:relative; z-index:2; }
+      .garland i{ width:11px; height:11px; border-radius:50%; display:block; box-shadow:0 0 10px 2px currentColor; animation:twinkle 2.4s ease-in-out infinite; }
+      .garland i:nth-child(4n+1){ background:#ff6b61; color:#ff6b61; }
+      .garland i:nth-child(4n+2){ background:var(--gold); color:var(--gold); animation-delay:.5s; }
+      .garland i:nth-child(4n+3){ background:#7fd08a; color:#7fd08a; animation-delay:1s; }
+      .garland i:nth-child(4n){ background:#7db8ff; color:#7db8ff; animation-delay:1.5s; }
+      @keyframes twinkle{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+
+      .wrap{ max-width:860px; margin:0 auto; padding:0 16px 64px; position:relative; z-index:2; }
+
+      /* ---------- language switch ---------- */
+      .langbar{ display:flex; justify-content:flex-end; padding:12px 2px 0; }
+      .langbar .seg{ display:flex; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); border-radius:999px; padding:4px; gap:4px; }
+      .langbar button{
+        border:0; border-radius:999px; padding:8px 14px; min-height:40px;
+        background:transparent; color:var(--ink-on-green); font-weight:700; font-size:.95rem;
+      }
+      .langbar button[aria-pressed="true"]{ background:var(--gold); color:#4a3205; box-shadow:0 2px 8px rgba(0,0,0,.3); }
+
+      /* ---------- headings ---------- */
+      .hero{ text-align:center; padding:10px 0 4px; }
+      .hero .tree{ font-size:2.6rem; line-height:1; filter:drop-shadow(0 4px 8px rgba(0,0,0,.4)); }
+      .hero h1{
+        margin:6px 0 4px; font-size:clamp(1.9rem, 6vw, 2.9rem); font-weight:800; letter-spacing:.02em;
+        color:var(--ink-on-green);
+      }
+      .hero h1 .latin{ font-family:"Mountains of Christmas", "M PLUS Rounded 1c", cursive; letter-spacing:.04em; }
+      .hero p{ margin:0 auto; max-width:560px; color:var(--muted-on-green); font-size:1.02rem; line-height:1.6; }
+
+      /* ---------- cards ---------- */
+      .card{
+        background:var(--card); color:var(--card-ink); border-radius:var(--radius);
+        box-shadow:var(--shadow); padding:22px 20px; margin-top:22px;
+        border-top:6px solid var(--red);
+      }
+      .card.green-top{ border-top-color:var(--green-btn); }
+      .card h2{ margin:0 0 6px; font-size:1.35rem; font-weight:800; display:flex; align-items:center; gap:10px; }
+      .card h2 .num{
+        background:var(--red); color:#fff; width:32px; height:32px; border-radius:50%;
+        display:inline-flex; align-items:center; justify-content:center; font-size:1rem; flex:none;
+      }
+      .card.green-top h2 .num{ background:var(--green-btn); }
+      .card .hint{ color:#7a6753; font-size:.95rem; line-height:1.6; margin:4px 0 14px; }
+
+      label.flabel{ display:block; font-weight:700; margin:14px 0 6px; font-size:1rem; }
+      .txtin, .txtarea, select.txtin{
+        width:100%; padding:12px 14px; font-size:1.05rem; border:2px solid var(--line);
+        border-radius:12px; background:#fff; color:var(--card-ink); outline:none;
+      }
+      .txtin:focus, .txtarea:focus{ border-color:var(--gold-dark); box-shadow:0 0 0 3px rgba(242,193,78,.35); }
+      .txtarea{ min-height:74px; resize:vertical; word-break:break-all; }
+
+      .prow{ display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+      .prow .pnum{
+        flex:none; width:34px; height:34px; border-radius:50%; background:#f3e3bb; color:#7a5b12;
+        display:flex; align-items:center; justify-content:center; font-weight:800;
+      }
+      .prow .txtin{ flex:1; }
+      .iconbtn{
+        flex:none; width:44px; height:44px; border-radius:12px; border:2px solid var(--line);
+        background:#fff; color:var(--red-dark); font-size:1.15rem; font-weight:800; line-height:1;
+      }
+      .iconbtn:disabled{ opacity:.3; }
+
+      .addbtn{
+        width:100%; padding:12px; border-radius:12px;
+        border:2px dashed #c9b48c; background:#fff8ea; color:#8a6d1f; font-weight:800; font-size:1rem; min-height:48px;
+      }
+      .crow{ display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+      .crow select{ flex:1; min-width:120px; }
+      .crow .heart{ color:var(--red); font-size:1.2rem; flex:none; }
+
+      .rules{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 2px; }
+      .rules span{
+        background:#eaf5ec; color:var(--green-btn-dark); border:1.5px solid #bfe0c8;
+        padding:7px 12px; border-radius:999px; font-weight:700; font-size:.9rem;
+      }
+
+      .bigbtn{
+        display:block; width:100%; margin-top:18px; padding:16px 18px; min-height:60px;
+        border:0; border-radius:16px; font-size:1.2rem; font-weight:800; color:#fff;
+        background:linear-gradient(180deg, #e2574f, var(--red-dark));
+        box-shadow:0 6px 0 #7e2320, 0 12px 22px rgba(0,0,0,.25);
+        transition:transform .08s ease, box-shadow .08s ease;
+      }
+      .bigbtn:active{ transform:translateY(4px); box-shadow:0 2px 0 #7e2320, 0 6px 12px rgba(0,0,0,.25); }
+      .bigbtn.green{ background:linear-gradient(180deg, #2b9a5b, var(--green-btn-dark)); box-shadow:0 6px 0 #0f4426, 0 12px 22px rgba(0,0,0,.25); }
+      .bigbtn.green:active{ box-shadow:0 2px 0 #0f4426, 0 6px 12px rgba(0,0,0,.25); }
+      .bigbtn.gold{ background:linear-gradient(180deg, #f6cd63, var(--gold-dark)); color:#4a3205; box-shadow:0 6px 0 #a67c14, 0 12px 22px rgba(0,0,0,.25); }
+      .bigbtn.gold:active{ box-shadow:0 2px 0 #a67c14, 0 6px 12px rgba(0,0,0,.25); }
+      .bigbtn:disabled{ opacity:.55; }
+
+      .err{
+        display:none; margin-top:14px; background:#fdecea; border:2px solid #f0b6b2; color:#8c2320;
+        border-radius:12px; padding:12px 14px; font-weight:700; line-height:1.55;
+      }
+      .err.show{ display:block; }
+      .okbox{
+        display:none; margin-top:16px; background:#eaf5ec; border:2px solid #bfe0c8; color:#14532d;
+        border-radius:12px; padding:14px; line-height:1.6; font-weight:700;
+      }
+      .okbox.show{ display:block; }
+      .linkrow{ display:flex; gap:8px; margin-top:10px; }
+      .linkrow .txtin{ flex:1; font-size:.92rem; }
+      .copybtn{
+        flex:none; padding:0 18px; border:0; border-radius:12px; min-height:48px;
+        background:var(--green-btn); color:#fff; font-weight:800; font-size:1rem;
+      }
+
+      .checklist{ margin:10px 0 0; padding:0; list-style:none; }
+      .checklist li{
+        display:flex; align-items:center; gap:12px; padding:10px 12px; margin-bottom:8px;
+        background:#fff; border:2px solid var(--line); border-radius:12px; font-weight:700;
+      }
+      .checklist input[type="checkbox"]{ width:26px; height:26px; flex:none; accent-color:var(--green-btn); }
+      .checklist label{ display:flex; align-items:center; gap:12px; width:100%; min-height:36px; cursor:pointer; }
+
+      .footlink{ text-align:center; margin-top:28px; }
+      .footlink button{
+        background:none; border:0; color:var(--muted-on-green); text-decoration:underline;
+        font-size:.95rem; padding:10px 14px; min-height:44px;
+      }
+
+      /* ---------- envelopes ---------- */
+      .envgrid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:16px; margin-top:20px; }
+      @media (min-width:640px){ .envgrid{ grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); } }
+      .env{
+        position:relative; border:0; padding:0; background:transparent; text-align:center; width:100%;
+      }
+      .env .paper{
+        position:relative; display:block; aspect-ratio:1.45/1; border-radius:12px;
+        background:var(--env, var(--red)); box-shadow:0 8px 18px rgba(0,0,0,.35); overflow:hidden;
+        transition:transform .15s ease;
+      }
+      .env:active .paper{ transform:scale(.96); }
+      .env .flap{
+        position:absolute; left:0; right:0; top:0; height:58%;
+        background:rgba(0,0,0,.18);
+        clip-path:polygon(0 0, 100% 0, 50% 100%);
+      }
+      .env .fold-l, .env .fold-r{ position:absolute; bottom:0; top:22%; width:52%; background:rgba(255,255,255,.10); }
+      .env .fold-l{ left:0; clip-path:polygon(0 0, 100% 55%, 0 100%); }
+      .env .fold-r{ right:0; clip-path:polygon(100% 0, 0 55%, 100% 100%); }
+      .env .seal{
+        position:absolute; left:50%; top:44%; transform:translate(-50%,-50%);
+        width:42px; height:42px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ffe9a8, var(--gold) 60%, var(--gold-dark));
+        color:#7a5b12; display:flex; align-items:center; justify-content:center; font-size:1.15rem;
+        box-shadow:0 3px 8px rgba(0,0,0,.35); border:2px solid rgba(255,255,255,.5);
+      }
+      .env .ename{
+        display:inline-block; margin-top:10px; background:var(--card); color:var(--card-ink);
+        font-weight:800; font-size:1.08rem; padding:7px 14px; border-radius:999px;
+        box-shadow:0 4px 10px rgba(0,0,0,.3); max-width:100%; overflow-wrap:anywhere;
+      }
+      .env .ebadge{
+        display:none; margin-top:6px; font-size:.85rem; font-weight:800; color:var(--gold);
+      }
+      .env.opened .ebadge.b-open{ display:block; }
+      .env.recovery .ebadge.b-rec{ display:block; color:#ffb3ae; }
+      .env.locked{ opacity:.55; }
+      .env.locked .paper{ filter:grayscale(.45); }
+      .env .lockic{
+        display:none; position:absolute; right:8px; top:8px; z-index:3; font-size:1.05rem;
+        background:rgba(0,0,0,.35); border-radius:50%; width:30px; height:30px; align-items:center; justify-content:center;
+      }
+      .env.locked .lockic{ display:flex; }
+
+      .lockbanner{
+        display:none; margin-top:18px; background:rgba(242,193,78,.16); border:1.5px solid rgba(242,193,78,.55);
+        color:#ffe9a8; border-radius:14px; padding:12px 16px; font-weight:700; line-height:1.6; text-align:center;
+      }
+      .lockbanner.show{ display:block; }
+
+      /* ---------- modals ---------- */
+      .overlay{
+        position:fixed; inset:0; background:rgba(5,20,12,.72); backdrop-filter:blur(3px);
+        display:none; align-items:center; justify-content:center; padding:18px; z-index:50;
+      }
+      .overlay.show{ display:flex; }
+      .modal{
+        background:var(--card); color:var(--card-ink); border-radius:20px; width:100%; max-width:430px;
+        padding:26px 22px; box-shadow:var(--shadow); text-align:center; border-top:8px solid var(--red);
+        max-height:92vh; overflow-y:auto;
+      }
+      .modal h3{ margin:0 0 8px; font-size:1.4rem; font-weight:800; line-height:1.4; }
+      .modal p{ margin:0 0 8px; line-height:1.65; color:#5d4a38; font-size:1.02rem; }
+      .modal .who{
+        font-size:1.5rem; font-weight:800; color:var(--red-dark); background:#fdecea;
+        border-radius:12px; padding:10px; margin:12px 0;
+      }
+      .modal .btns{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+      .modal .btns .bigbtn{ margin-top:0; }
+      .ghostbtn{
+        width:100%; padding:13px; min-height:52px; border-radius:14px; border:2px solid var(--line);
+        background:#fff; color:#7a6753; font-weight:800; font-size:1.05rem;
+      }
+      .smalllink{
+        background:none; border:0; color:#9a8468; text-decoration:underline; font-size:.92rem;
+        margin-top:14px; padding:10px; min-height:44px;
+      }
+
+      /* reveal envelope animation */
+      .stage{ display:flex; justify-content:center; padding:8px 0 2px; perspective:700px; }
+      .stage .paper{
+        position:relative; width:230px; aspect-ratio:1.45/1; border-radius:12px;
+        background:var(--env, var(--red)); box-shadow:0 10px 24px rgba(0,0,0,.3); overflow:visible;
+      }
+      .stage .flap{
+        position:absolute; left:0; right:0; top:0; height:58%; z-index:4;
+        background:var(--envdark, #a52f2b); border-radius:12px 12px 0 0;
+        clip-path:polygon(0 0, 100% 0, 50% 100%);
+        transform-origin:top center; transition:transform .7s cubic-bezier(.6,-0.1,.3,1.2);
+      }
+      .stage.opening .flap{ transform:rotateX(180deg); z-index:1; }
+      .stage .letter{
+        position:absolute; left:6%; right:6%; top:8%; bottom:6%; z-index:2; background:#fffdf6;
+        border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.2); padding:10px 6px;
+        display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+        transform:translateY(26%); transition:transform .8s ease .45s;
+      }
+      .stage.opening .letter{ transform:translateY(-16%); }
+      .stage .letter .gift{ font-size:1.7rem; }
+      .stage .letter .forwho{ font-size:.8rem; color:#9a8468; font-weight:700; }
+      .reveal-name{
+        font-size:clamp(1.7rem, 7vw, 2.2rem); font-weight:800; color:var(--red-dark);
+        line-height:1.3; overflow-wrap:anywhere; margin:6px 0 2px;
+      }
+      .reveal-label{ font-weight:700; color:#7a6753; margin-top:14px; }
+      .secret-note{ font-size:.9rem; color:#9a8468; margin-top:10px; line-height:1.6; }
+
+      #confetti{ position:fixed; inset:0; pointer-events:none; z-index:60; display:none; }
+      #toast{
+        position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+        background:#1d2b1f; color:#fff; padding:12px 20px; border-radius:999px; font-weight:800;
+        opacity:0; pointer-events:none; transition:all .25s ease; z-index:70; box-shadow:var(--shadow);
+        max-width:92vw; text-align:center;
+      }
+      #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+      .hidden{ display:none !important; }
+    </style>
+  </head>
+  <body>
+    <div id="snow" aria-hidden="true"></div>
+    <canvas id="confetti"></canvas>
+
+    <div class="wrap">
+      <div class="langbar">
+        <div class="seg" role="group" aria-label="Language">
+          <button type="button" data-lang="ja" aria-pressed="true">日本語</button>
+          <button type="button" data-lang="en" aria-pressed="false">English</button>
+          <button type="button" data-lang="es" aria-pressed="false">Español</button>
+        </div>
+      </div>
+
+      <div class="garland" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+      <!-- ================= HOME / ENTRY VIEW ================= -->
+      <section id="view-home" class="hidden">
+        <div class="hero">
+          <div class="tree" aria-hidden="true">🎄</div>
+          <h1><span class="latin">Secret Santa</span></h1>
+          <p data-i18n="homeSub"></p>
+        </div>
+
+        <div class="card">
+          <h2><span data-i18n="homeJoinTitle"></span></h2>
+          <p class="hint" data-i18n="homeJoinHint"></p>
+          <label class="flabel" for="join-text" data-i18n="homeJoinLabel"></label>
+          <textarea class="txtarea" id="join-text" data-i18n-ph="homeJoinPh"></textarea>
+          <button type="button" class="bigbtn green" id="join-go" data-i18n="homeJoinBtn"></button>
+          <div class="err" id="err-join"></div>
+        </div>
+
+        <div class="footlink">
+          <button type="button" id="to-setup-from-home" data-i18n="homeOrgBtn"></button>
+        </div>
+      </section>
+
+      <!-- ================= PARTICIPANT VIEW ================= -->
+      <section id="view-play" class="hidden">
+        <div class="hero">
+          <div class="tree" aria-hidden="true">🎄</div>
+          <h1 id="play-title">Secret Santa</h1>
+          <p data-i18n="playSub"></p>
+        </div>
+
+        <div class="lockbanner" id="lockbanner"></div>
+        <div class="envgrid" id="envgrid"></div>
+
+        <div class="footlink hidden" id="preview-back-wrap">
+          <button type="button" id="back-from-preview" data-i18n="backToSetup"></button>
+        </div>
+      </section>
+
+      <!-- ================= SETUP / ORGANIZER VIEW ================= -->
+      <section id="view-setup" class="hidden">
+        <div class="hero">
+          <div class="tree" aria-hidden="true">🎄</div>
+          <h1><span class="latin">Secret Santa</span></h1>
+          <p data-i18n="setupSub"></p>
+        </div>
+
+        <div class="card">
+          <h2><span class="num">1</span><span data-i18n="step1Title"></span></h2>
+          <p class="hint" data-i18n="step1Hint"></p>
+          <label class="flabel" for="evtitle" data-i18n="evTitleLabel"></label>
+          <input class="txtin" id="evtitle" type="text" maxlength="40" />
+          <label class="flabel" data-i18n="namesLabel"></label>
+          <div id="prows"></div>
+          <button type="button" class="addbtn" id="add-person" data-i18n="addPerson"></button>
+          <div class="err" id="err-names"></div>
+        </div>
+
+        <div class="card green-top">
+          <h2><span class="num">2</span><span data-i18n="step2Title"></span></h2>
+          <p class="hint" data-i18n="step2Hint"></p>
+          <div id="crows"></div>
+          <button type="button" class="addbtn" id="add-couple" data-i18n="addCouple"></button>
+          <div class="err" id="err-couples"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="num">3</span><span data-i18n="step3Title"></span></h2>
+          <p class="hint" data-i18n="step3Hint"></p>
+          <div class="rules">
+            <span data-i18n="ruleSelf"></span>
+            <span data-i18n="ruleCouple"></span>
+            <span data-i18n="ruleMutual"></span>
+            <span data-i18n="ruleAll"></span>
+          </div>
+          <button type="button" class="bigbtn" id="draw-btn" data-i18n="drawBtn"></button>
+          <p class="hint" style="margin-top:12px;" data-i18n="blindNote"></p>
+          <div class="err" id="err-draw"></div>
+          <div class="okbox" id="draw-ok">
+            <div data-i18n="drawOkMsg"></div>
+            <label class="flabel" for="share-base" data-i18n="shareLinkLabel"></label>
+            <p style="margin:0 0 8px; font-weight:500; font-size:.93rem;" data-i18n="shareLinkHint"></p>
+            <input class="txtin" id="share-base" type="url" data-i18n-ph="shareLinkPh" />
+            <label class="flabel" data-i18n="inviteUrlLabel"></label>
+            <div class="linkrow">
+              <input class="txtin" id="share-url" type="text" readonly />
+              <button type="button" class="copybtn" id="copy-url" data-i18n="copyUrlBtn"></button>
+            </div>
+            <div class="err" id="err-share"></div>
+            <button type="button" class="bigbtn green" id="copy-msg" style="margin-top:12px;" data-i18n="copyMsgBtn"></button>
+            <button type="button" class="ghostbtn" id="preview-draw" style="margin-top:10px;" data-i18n="previewBtn"></button>
+            <p style="margin:12px 0 0; font-weight:500; font-size:.93rem;" data-i18n="drawOkNote"></p>
+          </div>
+        </div>
+
+        <div class="card green-top">
+          <h2><span class="num">↺</span><span data-i18n="recTitle"></span></h2>
+          <p class="hint" data-i18n="recHint"></p>
+          <label class="flabel" for="rec-link" data-i18n="recLinkLabel"></label>
+          <textarea class="txtarea" id="rec-link" data-i18n-ph="recLinkPh"></textarea>
+          <button type="button" class="bigbtn gold" id="rec-load" data-i18n="recLoadBtn"></button>
+          <div class="err" id="err-rec"></div>
+          <div id="rec-body" class="hidden">
+            <label class="flabel" data-i18n="recPickLabel"></label>
+            <ul class="checklist" id="rec-list"></ul>
+            <button type="button" class="bigbtn green" id="rec-draw" data-i18n="recDrawBtn"></button>
+            <div class="err" id="err-rec2"></div>
+            <div class="okbox" id="rec-ok">
+              <div data-i18n="recOkMsg"></div>
+              <label class="flabel" data-i18n="inviteUrlLabel"></label>
+              <div class="linkrow">
+                <input class="txtin" id="rec-share-url" type="text" readonly />
+                <button type="button" class="copybtn" id="rec-copy-url" data-i18n="copyUrlBtn"></button>
+              </div>
+              <div class="err" id="err-rec-share"></div>
+              <button type="button" class="bigbtn green" id="rec-copy-msg" style="margin-top:12px;" data-i18n="copyMsgBtn"></button>
+              <button type="button" class="ghostbtn" id="rec-preview" style="margin-top:10px;" data-i18n="previewBtn"></button>
+              <p style="margin:12px 0 0; font-weight:500; font-size:.93rem;" data-i18n="recOkNote"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="footlink">
+          <button type="button" id="to-play-from-setup" class="hidden" data-i18n="backToEnvelopes"></button>
+          <button type="button" id="to-home-from-setup" data-i18n="backHome"></button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+    <div class="overlay" id="ov-confirm1" role="dialog" aria-modal="true">
+      <div class="modal">
+        <h3 data-i18n="c1Title"></h3>
+        <div class="who" id="c1-name"></div>
+        <p data-i18n="c1Body"></p>
+        <div class="btns">
+          <button type="button" class="bigbtn green" id="c1-yes" data-i18n="c1Yes"></button>
+          <button type="button" class="ghostbtn" id="c1-no" data-i18n="c1No"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-confirm2" role="dialog" aria-modal="true">
+      <div class="modal">
+        <h3 data-i18n="c2Title"></h3>
+        <p data-i18n="c2Body"></p>
+        <div class="btns">
+          <button type="button" class="bigbtn" id="c2-yes" data-i18n="c2Yes"></button>
+          <button type="button" class="ghostbtn" id="c2-no" data-i18n="c2No"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-reveal" role="dialog" aria-modal="true">
+      <div class="modal">
+        <div class="stage" id="reveal-stage">
+          <div class="paper" id="reveal-paper">
+            <div class="letter">
+              <div class="gift" aria-hidden="true">🎁</div>
+              <div class="forwho" data-i18n="revealForYou"></div>
+            </div>
+            <div class="flap"></div>
+          </div>
+        </div>
+        <div class="reveal-label" data-i18n="revealLabel"></div>
+        <div class="reveal-name" id="reveal-name"></div>
+        <p class="secret-note" data-i18n="revealNote"></p>
+        <div class="btns">
+          <button type="button" class="bigbtn green" id="reveal-close" data-i18n="closeBtn"></button>
+        </div>
+        <button type="button" class="smalllink" id="reveal-mistake" data-i18n="mistakeLink"></button>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-mistake" role="dialog" aria-modal="true">
+      <div class="modal">
+        <h3 data-i18n="misTitle"></h3>
+        <p data-i18n="misBody"></p>
+        <div class="btns">
+          <button type="button" class="bigbtn gold" id="mis-mark" data-i18n="misMarkBtn"></button>
+          <button type="button" class="ghostbtn" id="mis-close" data-i18n="closeBtn"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-locked" role="dialog" aria-modal="true">
+      <div class="modal">
+        <h3 data-i18n="lockTitle"></h3>
+        <p id="lock-body"></p>
+        <div class="btns">
+          <button type="button" class="bigbtn green" id="lock-close" data-i18n="closeBtn"></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" role="status"></div>
+
+    <script>
+    "use strict";
+    /* ================= i18n ================= */
+    var I18N = {
+      ja: {
+        homeSub: "プレゼント交換の封筒のページです。幹事さんから届いた招待リンクを開くと、そのまま封筒の画面が開きます。",
+        homeJoinTitle: "封筒を開きに来た方へ",
+        homeJoinHint: "招待リンクをタップしたのにこの画面が出たときは、幹事さんから届いたメッセージ（またはリンク）をそのまま下に貼り付けてください。封筒の画面が開きます。",
+        homeJoinLabel: "招待メッセージ・リンクの貼り付け",
+        homeJoinPh: "ここにメッセージやリンクを貼り付け",
+        homeJoinBtn: "封筒画面を開く",
+        errJoin: "読み取れませんでした。幹事さんから届いたメッセージ全体を貼ってください。",
+        homeOrgBtn: "幹事の方はこちら（部屋を作る）",
+        backHome: "← 最初の画面にもどる",
+        setupSub: "幹事さん用ページです。参加者の名前を登録して抽選すると、参加者用の招待リンクが作れます。参加者はリンクを開くだけで封筒の画面に入れます。組み合わせはこの画面には表示されません。",
+        step1Title: "参加者を登録",
+        step1Hint: "プレゼント交換に参加する全員の名前を入れてください。3人以上なら何人でもOK（奇数でも大丈夫です）。",
+        evTitleLabel: "イベント名",
+        evTitleDefault: "クリスマスのプレゼント交換",
+        namesLabel: "参加者の名前",
+        namePh: "名前（例：たろう）",
+        addPerson: "＋ 参加者を追加",
+        step2Title: "夫婦ペア（任意）",
+        step2Hint: "夫婦同士でプレゼントをあげ合わないようにしたい場合は、ペアを選んでください。なければこの欄は空のままで大丈夫です。",
+        selectPerson: "選択してください",
+        addCouple: "＋ ペアを追加",
+        step3Title: "抽選して招待リンクを作る",
+        step3Hint: "ボタンを押すと、下のルールをすべて守った組み合わせをランダムに作り、参加者用の招待リンクを発行します。抽選結果はこの画面にも表示されません。",
+        ruleSelf: "✓ 自分自身にはならない",
+        ruleCouple: "✓ 夫婦同士にはならない",
+        ruleMutual: "✓ 互い違いペアなし",
+        ruleAll: "✓ 全員があげて・もらえる",
+        drawBtn: "🎲 マッチングを作成する",
+        blindNote: "※ 組み合わせが画面に出ることはありませんが、招待リンクの中身は「目隠し」レベルで、解析できる人には分かってしまう仕組みです。家族・友達同士の内輪のパーティー向けです。",
+        drawOkMsg: "招待リンクができました！",
+        drawOkNote: "配り方：「参加用メッセージをコピー」を押して、グループLINEなどに貼って送るだけです。受け取った人は、メッセージの中のリンクを開くだけで封筒の画面が開きます（コードの入力はいりません）。",
+        copyBtn: "コピー",
+        shareLinkLabel: "① このページの共有リンク",
+        shareLinkHint: "Museアプリの共有ボタンで、このページのリンクをコピーしてここに貼り付けてください。参加者用の招待リンクが完成します。貼り付けたリンクはこの端末に覚えさせるので、次回からは自動で入ります。",
+        shareLinkPh: "ここに共有リンクを貼り付け",
+        inviteUrlLabel: "② 招待用リンク（参加者用）",
+        copyUrlBtn: "リンクをコピー",
+        errShareLink: "先に「① このページの共有リンク」を貼り付けてください。アプリの共有ボタンでコピーしたリンクが必要です。",
+        backToSetup: "← 幹事画面にもどる（確認用プレビュー中）",
+        copyMsgBtn: "📩 参加用メッセージをコピー",
+        previewBtn: "封筒画面を開いて確かめる",
+        shareMsg: "🎄{title}🎄\nシークレットサンタの封筒ができました！\n下のリンクを開くと、封筒の画面がそのまま開きます。自分の名前の封筒だけを開けてくださいね。\n{url}",
+        copied: "リンクをコピーしました",
+        copyFail: "コピーできませんでした。リンクを長押ししてコピーしてください",
+        recTitle: "リカバリー（再抽選）",
+        recHint: "誰かが間違えて他人の封筒を開けてしまったときに使います。正しく開けた人の結果は変えず、残りの人だけで組み合わせを作り直して、新しい招待リンクを発行します。",
+        recLinkLabel: "今みんなに配っている招待リンク",
+        recLinkPh: "ここに招待リンクを貼り付けてください",
+        recLoadBtn: "リンクを読み込む",
+        recPickLabel: "正しく自分の封筒を開けた人（結果をそのまま残します）",
+        recDrawBtn: "再抽選して新しいリンクを作る",
+        recOkMsg: "新しい招待リンクができました！「参加用メッセージをコピー」してみんなに配り直してください（古いリンクは使わないでください）。",
+        recOkNote: "※ チェックした人の結果は前とまったく同じです。チェックしなかった人だけ、新しい組み合わせになっています。",
+        errNamesEmpty: "名前が空の欄があります。全員の名前を入れてください。",
+        errNamesDup: "同じ名前が2つあります。見分けがつくように変えてください（例：たろう・たろう2）。",
+        errNamesFew: "参加者は3人以上で登録してください。",
+        errCoupleSame: "ペアの2人が同じ人になっています。違う人を選んでください。",
+        errCoupleDup: "同じ人が2つのペアに入っています。1人につきペアは1つまでです。",
+        errDrawFail: "条件を満たす組み合わせが作れませんでした。夫婦ペアが多い場合は、ペアを減らすか参加者を増やしてください。",
+        errRecLink: "読み取れませんでした。正しい招待リンクを貼ってください。",
+        errRecFew: "作り直せる人が少なすぎます（最低3人必要です）。正しく開けた人のチェックを減らすか、全員分を作り直してください。",
+        errRecFail: "残りの人だけでは条件を満たす組み合わせが作れませんでした。チェックを減らしてもう一度お試しください。",
+        organizerLink: "幹事メニューはこちら",
+        backToEnvelopes: "← 封筒の画面にもどる",
+        playSub: "自分の名前の封筒をタップして開けてください。中には「あなたがプレゼントをあげる人」の名前が入っています。誰からもらうかは当日のお楽しみです。",
+        openedBadge: "開封済み ✓",
+        recoveryBadge: "幹事に連絡をお願いします",
+        lockBanner: "このスマホでは「{name}」さんの封筒を開けました。他の封筒は開けられません。自分の封筒はタップすれば何度でも見られます。",
+        c1Title: "本当に本人ですか？",
+        c1Body: "他人の封筒を開けると、プレゼントのサプライズが台無しになってしまいます。ご本人だけ開けてください。",
+        c1Yes: "はい、私です",
+        c1No: "ちがう、もどる",
+        c2Title: "開ける前に確認",
+        c2Body: "封筒を開けると、このスマホでは他の人の封筒は開けられなくなります。本当に開けますか？",
+        c2Yes: "開ける！",
+        c2No: "やめる",
+        revealForYou: "for you",
+        revealLabel: "あなたがプレゼントをあげる人は…",
+        revealNote: "この名前はあなただけに表示されています。スクリーンショットは撮らず、当日まで内緒にしてくださいね。",
+        closeBtn: "閉じる",
+        mistakeLink: "間違えて開けてしまった場合はこちら",
+        misTitle: "間違えて開けてしまいましたか？",
+        misBody: "大丈夫です。幹事さんに「間違えて開けてしまった」と伝えてください。幹事さんが組み合わせを作り直した新しいリンクを配ってくれます。下のボタンを押すと、この封筒に目印が付きます。",
+        misMarkBtn: "目印をつけて閉じる",
+        misMarked: "目印をつけました。幹事さんに連絡してください",
+        lockTitle: "この封筒は開けられません",
+        lockBody: "このスマホでは、すでに「{name}」さんの封筒を開けています。1台のスマホで開けられるのは1人分だけです。自分の封筒はタップすれば見られます。"
+      },
+      en: {
+        homeSub: "This is the page for the gift-exchange envelopes. Opening the invitation link from the organizer takes you straight to the envelopes.",
+        homeJoinTitle: "Here to open your envelope?",
+        homeJoinHint: "If you tapped the invitation link and still landed here, paste the message (or link) you received from the organizer below, exactly as it arrived. Your envelopes will open.",
+        homeJoinLabel: "Paste the invitation message or link",
+        homeJoinPh: "Paste the message or link here",
+        homeJoinBtn: "Open the envelopes",
+        errJoin: "Could not read that. Please paste the entire message you received from the organizer.",
+        homeOrgBtn: "Organizers: tap here to create a room",
+        backHome: "← Back to the first screen",
+        setupSub: "Organizer page. Register everyone's name and run the draw to create an invitation link for participants. They just open the link to reach the envelopes. The matches are never shown on this screen.",
+        step1Title: "Register participants",
+        step1Hint: "Enter the name of everyone taking part. Any number from 3 up works — odd numbers are fine too.",
+        evTitleLabel: "Event name",
+        evTitleDefault: "Christmas Gift Exchange",
+        namesLabel: "Participant names",
+        namePh: "Name (e.g. Alex)",
+        addPerson: "+ Add a participant",
+        step2Title: "Couples (optional)",
+        step2Hint: "If couples should not give gifts to each other, select each pair here. You can leave this empty if it does not apply.",
+        selectPerson: "Please select",
+        addCouple: "+ Add a pair",
+        step3Title: "Draw and create the invitation link",
+        step3Hint: "Press the button to randomly create a matching that follows all the rules below, and to issue the invitation link. The results are never shown on this screen.",
+        ruleSelf: "✓ Never yourself",
+        ruleCouple: "✓ Never your partner",
+        ruleMutual: "✓ No mutual pairs",
+        ruleAll: "✓ Everyone gives & receives",
+        drawBtn: "🎲 Create the matching",
+        blindNote: "* The matches never appear on screen, but they are only hidden inside the invitation link — someone who knows how to decode it could read them. Best for parties among trusted friends and family.",
+        drawOkMsg: "Your invitation link is ready!",
+        drawOkNote: "How to share: just tap “Copy the invitation message” and send it to your group chat. Opening the link in the message takes people straight to the envelopes — no code to paste.",
+        copyBtn: "Copy",
+        shareLinkLabel: "1) Link to this page",
+        shareLinkHint: "Copy this page's link using the Share button in the Muse app and paste it here. That completes the invitation link. The pasted link is remembered on this device, so next time it is filled in automatically.",
+        shareLinkPh: "Paste the shared link here",
+        inviteUrlLabel: "2) Invitation link (for participants)",
+        copyUrlBtn: "Copy link",
+        errShareLink: "Please paste the link to this page first (copied with the app's Share button).",
+        backToSetup: "← Back to the organizer page (preview)",
+        copyMsgBtn: "📩 Copy the invitation message",
+        previewBtn: "Open the envelope screen to check",
+        shareMsg: "🎄 {title} 🎄\nYour Secret Santa envelopes are ready!\nOpen the link below to go straight to the envelopes. Please open only the envelope with your own name.\n{url}",
+        copied: "Link copied",
+        copyFail: "Could not copy. Please long-press the link to copy it",
+        recTitle: "Recovery (re-draw)",
+        recHint: "Use this if someone opened the wrong envelope by mistake. People who opened theirs correctly keep their result; only the rest are re-matched and a new invitation link is issued.",
+        recLinkLabel: "The invitation link currently in use",
+        recLinkPh: "Paste the invitation link here",
+        recLoadBtn: "Load the link",
+        recPickLabel: "People who correctly opened their own envelope (their result stays the same)",
+        recDrawBtn: "Re-draw and create a new link",
+        recOkMsg: "A new invitation link is ready! Tap “Copy the invitation message” and share it with everyone (do not use the old link anymore).",
+        recOkNote: "* People you checked keep exactly the same result as before. Only the unchecked people get a new matching.",
+        errNamesEmpty: "Some name fields are empty. Please fill in everyone's name.",
+        errNamesDup: "Two people have the same name. Please make them distinguishable (e.g. Alex / Alex 2).",
+        errNamesFew: "Please register at least 3 participants.",
+        errCoupleSame: "A pair has the same person twice. Please choose two different people.",
+        errCoupleDup: "Someone appears in two pairs. Each person can be in only one pair.",
+        errDrawFail: "No matching satisfies all the rules. If there are many couples, try fewer pairs or more participants.",
+        errRecLink: "Could not read that. Please paste the correct invitation link.",
+        errRecFew: "Too few people left to re-match (at least 3 are needed). Uncheck some people, or redo the draw for everyone.",
+        errRecFail: "No valid matching exists for the remaining people alone. Try unchecking fewer people.",
+        organizerLink: "Organizer menu",
+        backToEnvelopes: "← Back to the envelopes",
+        playSub: "Tap the envelope with your name on it. Inside is the name of the person YOU will give a gift to. Who gives to you stays a surprise until the day!",
+        openedBadge: "Opened ✓",
+        recoveryBadge: "Please contact the organizer",
+        lockBanner: "On this phone, the envelope for “{name}” has been opened. No other envelope can be opened here. You can tap your own envelope to see it again anytime.",
+        c1Title: "Is this really you?",
+        c1Body: "Opening someone else's envelope would spoil the surprise. Please open it only if it is yours.",
+        c1Yes: "Yes, it's me",
+        c1No: "No, go back",
+        c2Title: "One more check",
+        c2Body: "Once you open an envelope, this phone cannot open anyone else's. Are you sure you want to open it?",
+        c2Yes: "Open it!",
+        c2No: "Cancel",
+        revealForYou: "for you",
+        revealLabel: "You will give your gift to…",
+        revealNote: "This name is shown only to you. Please don't take a screenshot — keep it secret until the day.",
+        closeBtn: "Close",
+        mistakeLink: "Opened it by mistake? Tap here",
+        misTitle: "Opened the wrong envelope?",
+        misBody: "No problem. Please tell the organizer that you opened one by mistake. They will send a new link with a fresh matching. Tap the button below to mark this envelope.",
+        misMarkBtn: "Mark it and close",
+        misMarked: "Marked. Please contact the organizer",
+        lockTitle: "This envelope can't be opened",
+        lockBody: "This phone has already opened the envelope for “{name}”. Only one person's envelope can be opened per phone. Tap your own envelope to see yours again."
+      },
+      es: {
+        homeSub: "Esta es la página de los sobres del intercambio de regalos. Al abrir el enlace de invitación del organizador llegarás directamente a los sobres.",
+        homeJoinTitle: "¿Vienes a abrir tu sobre?",
+        homeJoinHint: "Si tocaste el enlace de invitación y aun así llegaste aquí, pega abajo el mensaje (o el enlace) que te envió el organizador, tal como llegó. Se abrirán los sobres.",
+        homeJoinLabel: "Pega el mensaje o enlace de invitación",
+        homeJoinPh: "Pega aquí el mensaje o el enlace",
+        homeJoinBtn: "Abrir los sobres",
+        errJoin: "No se pudo leer. Pega el mensaje completo que te envió el organizador.",
+        homeOrgBtn: "Organizadores: toquen aquí para crear una sala",
+        backHome: "← Volver a la primera pantalla",
+        setupSub: "Página del organizador. Registra los nombres de todos y haz el sorteo para crear un enlace de invitación para los participantes. Solo tienen que abrir el enlace para llegar a los sobres. Los emparejamientos nunca se muestran en esta pantalla.",
+        step1Title: "Registrar participantes",
+        step1Hint: "Escribe el nombre de todas las personas que participan. Funciona con cualquier cantidad desde 3 — también con números impares.",
+        evTitleLabel: "Nombre del evento",
+        evTitleDefault: "Intercambio de regalos de Navidad",
+        namesLabel: "Nombres de los participantes",
+        namePh: "Nombre (ej.: Alex)",
+        addPerson: "+ Añadir participante",
+        step2Title: "Parejas (opcional)",
+        step2Hint: "Si las parejas no deben regalarse entre sí, selecciona cada pareja aquí. Puedes dejarlo vacío si no aplica.",
+        selectPerson: "Selecciona",
+        addCouple: "+ Añadir pareja",
+        step3Title: "Sortear y crear el enlace de invitación",
+        step3Hint: "Pulsa el botón para crear al azar un emparejamiento que cumpla todas las reglas de abajo y generar el enlace de invitación. Los resultados nunca se muestran en esta pantalla.",
+        ruleSelf: "✓ Nunca a ti mismo",
+        ruleCouple: "✓ Nunca a tu pareja",
+        ruleMutual: "✓ Sin parejas mutuas",
+        ruleAll: "✓ Todos dan y reciben",
+        drawBtn: "🎲 Crear el emparejamiento",
+        blindNote: "* Los emparejamientos nunca aparecen en pantalla, pero solo van ocultos dentro del enlace de invitación: quien sepa descifrarlo podría leerlos. Pensado para fiestas entre amigos y familia de confianza.",
+        drawOkMsg: "¡Tu enlace de invitación está listo!",
+        drawOkNote: "Cómo compartir: pulsa «Copiar el mensaje de invitación» y envíalo al chat del grupo. Al abrir el enlace del mensaje se llega directamente a los sobres, sin pegar ningún código.",
+        copyBtn: "Copiar",
+        shareLinkLabel: "1) Enlace a esta página",
+        shareLinkHint: "Copia el enlace de esta página con el botón Compartir de la app de Muse y pégalo aquí. Así se completa el enlace de invitación. El enlace pegado se recuerda en este dispositivo, así que la próxima vez aparecerá automáticamente.",
+        shareLinkPh: "Pega aquí el enlace compartido",
+        inviteUrlLabel: "2) Enlace de invitación (para participantes)",
+        copyUrlBtn: "Copiar enlace",
+        errShareLink: "Primero pega el enlace a esta página (copiado con el botón Compartir de la app).",
+        backToSetup: "← Volver a la página del organizador (vista previa)",
+        copyMsgBtn: "📩 Copiar el mensaje de invitación",
+        previewBtn: "Abrir la pantalla de sobres para comprobar",
+        shareMsg: "🎄 {title} 🎄\n¡Ya están listos los sobres del amigo secreto!\nAbre el enlace de abajo para ir directamente a los sobres. Abre solo el sobre que lleva tu nombre, por favor.\n{url}",
+        copied: "Enlace copiado",
+        copyFail: "No se pudo copiar. Mantén pulsado el enlace para copiarlo",
+        recTitle: "Recuperación (nuevo sorteo)",
+        recHint: "Úsalo si alguien abrió por error el sobre de otra persona. Quienes abrieron bien el suyo conservan su resultado; solo se vuelve a sortear al resto y se genera un enlace de invitación nuevo.",
+        recLinkLabel: "El enlace de invitación que se está usando",
+        recLinkPh: "Pega aquí el enlace de invitación",
+        recLoadBtn: "Cargar el enlace",
+        recPickLabel: "Personas que abrieron correctamente su sobre (su resultado no cambia)",
+        recDrawBtn: "Volver a sortear y crear un enlace nuevo",
+        recOkMsg: "¡El nuevo enlace de invitación está listo! Pulsa «Copiar el mensaje de invitación» y compártelo con todos (ya no usen el enlace anterior).",
+        recOkNote: "* Las personas marcadas conservan exactamente el mismo resultado. Solo las no marcadas reciben un emparejamiento nuevo.",
+        errNamesEmpty: "Hay campos de nombre vacíos. Completa el nombre de todos.",
+        errNamesDup: "Dos personas tienen el mismo nombre. Hazlos distinguibles (ej.: Alex / Alex 2).",
+        errNamesFew: "Registra al menos 3 participantes.",
+        errCoupleSame: "Una pareja tiene a la misma persona dos veces. Elige a dos personas distintas.",
+        errCoupleDup: "Alguien aparece en dos parejas. Cada persona solo puede estar en una pareja.",
+        errDrawFail: "Ningún emparejamiento cumple todas las reglas. Si hay muchas parejas, prueba con menos parejas o más participantes.",
+        errRecLink: "No se pudo leer. Pega el enlace de invitación correcto.",
+        errRecFew: "Quedan muy pocas personas para volver a sortear (se necesitan al menos 3). Desmarca a algunas personas o repite el sorteo para todos.",
+        errRecFail: "No existe un emparejamiento válido solo con las personas restantes. Prueba desmarcando a menos personas.",
+        organizerLink: "Menú del organizador",
+        backToEnvelopes: "← Volver a los sobres",
+        playSub: "Toca el sobre que lleva tu nombre. Dentro está el nombre de la persona a la que TÚ darás el regalo. Quién te regala a ti será una sorpresa hasta ese día.",
+        openedBadge: "Abierto ✓",
+        recoveryBadge: "Avisa al organizador, por favor",
+        lockBanner: "En este teléfono ya se abrió el sobre de «{name}». No se puede abrir ningún otro sobre aquí. Puedes tocar tu propio sobre para verlo de nuevo cuando quieras.",
+        c1Title: "¿De verdad eres tú?",
+        c1Body: "Abrir el sobre de otra persona arruinaría la sorpresa. Ábrelo solo si es el tuyo.",
+        c1Yes: "Sí, soy yo",
+        c1No: "No, volver",
+        c2Title: "Una última confirmación",
+        c2Body: "Cuando abras un sobre, este teléfono ya no podrá abrir el de nadie más. ¿Seguro que quieres abrirlo?",
+        c2Yes: "¡Abrirlo!",
+        c2No: "Cancelar",
+        revealForYou: "for you",
+        revealLabel: "Darás tu regalo a…",
+        revealNote: "Este nombre se muestra solo a ti. No hagas captura de pantalla: guárdalo en secreto hasta ese día.",
+        closeBtn: "Cerrar",
+        mistakeLink: "¿Lo abriste por error? Toca aquí",
+        misTitle: "¿Abriste el sobre equivocado?",
+        misBody: "No pasa nada. Avisa al organizador de que abriste uno por error. Enviará un enlace nuevo con un emparejamiento nuevo. Pulsa el botón de abajo para marcar este sobre.",
+        misMarkBtn: "Marcarlo y cerrar",
+        misMarked: "Marcado. Avisa al organizador, por favor",
+        lockTitle: "Este sobre no se puede abrir",
+        lockBody: "Este teléfono ya abrió el sobre de «{name}». Solo se puede abrir el sobre de una persona por teléfono. Toca tu propio sobre para volver a ver el tuyo."
+      }
+    };
+    var lang = "ja";
+    try { lang = localStorage.getItem("ss_lang") || "ja"; } catch (e) {}
+    if (!I18N[lang]) lang = "ja";
+    function t(key) { return (I18N[lang] && I18N[lang][key]) || I18N.ja[key] || key; }
+    function fmt(key, name) { return t(key).replace("{name}", name); }
+
+    function buzz(pattern) {
+      try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+    }
+    function toast(msg) {
+      var el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(function () { el.classList.remove("show"); }, 2400);
+    }
+
+    /* ================= data encode/decode (blindfold) ================= */
+    function encodeData(obj) {
+      var json = JSON.stringify(obj);
+      var b = btoa(unescape(encodeURIComponent(json)));
+      b = b.split("").reverse().join("");
+      return "x1." + b.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+    function decodeData(s) {
+      if (!s || s.indexOf("x1.") !== 0) throw new Error("bad");
+      var b = s.slice(3).replace(/-/g, "+").replace(/_/g, "/");
+      while (b.length % 4) b += "=";
+      b = b.split("").reverse().join("");
+      var obj = JSON.parse(decodeURIComponent(escape(atob(b))));
+      if (!obj || !Array.isArray(obj.names) || !Array.isArray(obj.assign)) throw new Error("bad");
+      return obj;
+    }
+    function dataFromLink(text) {
+      var s = String(text || "");
+      var m = /[#?&]p=(x1\.[A-Za-z0-9_-]+)/.exec(s);
+      if (m) return decodeData(m[1]);
+      m = /(x1\.[A-Za-z0-9_-]+)/.exec(s);
+      if (m) return decodeData(m[1]);
+      return decodeData(s.trim());
+    }
+    function currentData() {
+      var codes = [];
+      var m = /[?&]p=([A-Za-z0-9._=-]+)/.exec(location.search || "");
+      if (m) codes.push(m[1]);
+      m = /#p=([A-Za-z0-9._=-]+)/.exec(location.hash || "");
+      if (m) codes.push(m[1]);
+      for (var i = 0; i < codes.length; i++) {
+        try { return decodeData(codes[i]); } catch (e) { /* try the other channel */ }
+      }
+      return null;
+    }
+    function codeFor(data) { return encodeData(data); }
+    var shareBase = "";
+    try { shareBase = localStorage.getItem("ss_sharebase") || ""; } catch (e) {}
+    function cleanBase(u) {
+      u = String(u || "").trim();
+      var m = /https?:\/\/[^\s]+/.exec(u);
+      if (m) u = m[0];
+      u = u.split("#")[0];
+      /* drop any stale room parameter from a previously copied invitation link */
+      var q = u.indexOf("?");
+      if (q >= 0) {
+        var path = u.slice(0, q);
+        var kept = u.slice(q + 1).split("&").filter(function (kv) {
+          return kv && kv.split("=")[0] !== "p";
+        });
+        u = kept.length ? path + "?" + kept.join("&") : path;
+      }
+      return u;
+    }
+    function inviteUrlFor(data) {
+      if (!data) return "";
+      var base = cleanBase(shareBase);
+      if (!/^https?:\/\//.test(base)) return "";
+      var code = encodeData(data);
+      /* Carry the room in BOTH the query and the fragment: some share shells
+         and redirects drop the fragment, others drop the query — whichever
+         survives still opens the envelope screen directly. */
+      var sep = base.indexOf("?") === -1 ? "?" : "&";
+      return base + sep + "p=" + code + "#p=" + code;
+    }
+    function shareMsgFor(data) {
+      return t("shareMsg").replace("{title}", data.title || "").replace("{url}", inviteUrlFor(data));
+    }
+    var fromPreview = false;
+    function openRoom(code, isPreview) {
+      fromPreview = !!isPreview;
+      /* Write the room into BOTH channels so a stale ?p= from an earlier
+         room can never shadow the room being opened now. */
+      try {
+        history.replaceState(null, "", location.pathname + "?p=" + code + "#p=" + code);
+      } catch (e) {
+        location.hash = "p=" + code;
+      }
+      showView();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    function refreshInviteOutputs() {
+      var urlEl = $("share-url");
+      if (urlEl && typeof lastDrawData !== "undefined" && lastDrawData) urlEl.value = inviteUrlFor(lastDrawData);
+      var rEl = $("rec-share-url");
+      if (rEl && typeof lastRecData !== "undefined" && lastRecData) rEl.value = inviteUrlFor(lastRecData);
+    }
+    function dataKey(data) {
+      var s = data.names.join("|") + "#" + data.assign.join(",");
+      var h = 0;
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+      return "ss_" + (h >>> 0).toString(36);
+    }
+
+    /* ================= matching ================= */
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+      }
+      return a;
+    }
+    function drawMatching(n, couples, fixed) {
+      var forb = {};
+      (couples || []).forEach(function (c) {
+        forb[c[0] + ">" + c[1]] = true;
+        forb[c[1] + ">" + c[0]] = true;
+      });
+      function valid(assign) {
+        for (var g = 0; g < n; g++) {
+          var r = assign[g];
+          if (r < 0 || r === g) return false;
+          if (forb[g + ">" + r]) return false;
+          if (assign[r] === g) return false; /* mutual pair */
+        }
+        return true;
+      }
+      for (var attempt = 0; attempt < 6000; attempt++) {
+        var assign = new Array(n).fill(-1);
+        var used = {};
+        if (fixed) {
+          fixed.forEach(function (pair) { assign[pair[0]] = pair[1]; used[pair[1]] = true; });
+        }
+        var givers = [], pool = [], i;
+        for (i = 0; i < n; i++) {
+          if (assign[i] === -1) givers.push(i);
+          if (!used[i]) pool.push(i);
+        }
+        shuffle(givers); shuffle(pool);
+        for (i = 0; i < givers.length; i++) assign[givers[i]] = pool[i];
+        if (valid(assign)) return assign;
+      }
+      return null;
+    }
+
+    /* ================= confetti ================= */
+    function confettiBurst() {
+      var cv = document.getElementById("confetti");
+      var ctx = cv.getContext("2d");
+      cv.width = window.innerWidth; cv.height = window.innerHeight;
+      cv.style.display = "block";
+      var colors = ["#d64541", "#f2c14e", "#2b9a5b", "#7db8ff", "#ffffff"];
+      var parts = [];
+      for (var i = 0; i < 130; i++) {
+        parts.push({
+          x: cv.width / 2 + (Math.random() - 0.5) * 220,
+          y: cv.height * 0.38,
+          vx: (Math.random() - 0.5) * 13,
+          vy: -Math.random() * 11 - 4,
+          w: 6 + Math.random() * 7, h: 8 + Math.random() * 8,
+          rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3,
+          color: colors[i % colors.length]
+        });
+      }
+      var start = null;
+      function frame(ts) {
+        if (!start) start = ts;
+        var el = ts - start;
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        parts.forEach(function (p) {
+          p.vy += 0.28; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        if (el < 2200) requestAnimationFrame(frame);
+        else { ctx.clearRect(0, 0, cv.width, cv.height); cv.style.display = "none"; }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    /* ================= snow ================= */
+    (function snow() {
+      var box = document.getElementById("snow");
+      var glyphs = ["❄", "❅", "•"];
+      for (var i = 0; i < 26; i++) {
+        var f = document.createElement("span");
+        f.className = "flake";
+        f.textContent = glyphs[i % glyphs.length];
+        f.style.left = Math.random() * 100 + "vw";
+        f.style.fontSize = (8 + Math.random() * 12) + "px";
+        f.style.setProperty("--drift", (Math.random() * 90 - 45) + "px");
+        f.style.animationDuration = (9 + Math.random() * 10) + "s";
+        f.style.animationDelay = (-Math.random() * 14) + "s";
+        box.appendChild(f);
+      }
+    })();
+
+    /* ================= shared helpers ================= */
+    var ENV_COLORS = ["#c0392b", "#1e7a46", "#b8860b", "#7a4a8c", "#20608c", "#c25e10", "#8c2f4d", "#2f6e6a", "#a03a1e", "#3d5a99"];
+    var ENV_DARK = ["#96281b", "#14532d", "#8a6508", "#5d3869", "#17425f", "#8f430b", "#662239", "#1f4a46", "#702712", "#2b3f66"];
+    function $(id) { return document.getElementById(id); }
+    function showErr(id, msg) {
+      var el = $(id);
+      if (msg) { el.textContent = msg; el.classList.add("show"); }
+      else { el.textContent = ""; el.classList.remove("show"); }
+    }
+    function copyText(text, inputEl) {
+      function done(ok) { toast(ok ? t("copied") : t("copyFail")); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(); });
+      } else fallback();
+      function fallback() {
+        try {
+          inputEl.focus(); inputEl.select();
+          done(document.execCommand("copy"));
+        } catch (e) { done(false); }
+      }
+    }
+
+    /* ================= language ================= */
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        el.textContent = t(el.getAttribute("data-i18n"));
+      });
+      document.querySelectorAll("[data-i18n-ph]").forEach(function (el) {
+        el.setAttribute("placeholder", t(el.getAttribute("data-i18n-ph")));
+      });
+      document.querySelectorAll(".langbar button").forEach(function (b) {
+        b.setAttribute("aria-pressed", b.getAttribute("data-lang") === lang ? "true" : "false");
+      });
+      var ev = $("evtitle");
+      if (ev && ev.getAttribute("data-user-edited") !== "1") ev.value = t("evTitleDefault");
+      refreshNamePlaceholders();
+      refreshCoupleSelects();
+      renderPlay();
+    }
+    document.querySelectorAll(".langbar button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        lang = b.getAttribute("data-lang");
+        try { localStorage.setItem("ss_lang", lang); } catch (e) {}
+        buzz(30);
+        applyLang();
+      });
+    });
+
+    /* ================= setup: participants ================= */
+    function addPersonRow(name) {
+      var rows = $("prows");
+      var row = document.createElement("div");
+      row.className = "prow";
+      var num = document.createElement("span"); num.className = "pnum";
+      var input = document.createElement("input");
+      input.className = "txtin pname"; input.type = "text"; input.maxLength = 20;
+      input.value = name || "";
+      input.setAttribute("placeholder", t("namePh"));
+      input.addEventListener("input", refreshCoupleSelects);
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "iconbtn"; del.textContent = "×";
+      del.setAttribute("aria-label", "remove");
+      del.addEventListener("click", function () { buzz(20); row.remove(); renumber(); refreshCoupleSelects(); });
+      row.appendChild(num); row.appendChild(input); row.appendChild(del);
+      rows.appendChild(row);
+      renumber();
+    }
+    function renumber() {
+      var rows = $("prows").children;
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].querySelector(".pnum").textContent = String(i + 1);
+        rows[i].querySelector(".iconbtn").disabled = rows.length <= 3;
+      }
+    }
+    function refreshNamePlaceholders() {
+      document.querySelectorAll(".pname").forEach(function (inp) {
+        inp.setAttribute("placeholder", t("namePh"));
+      });
+    }
+    function personNames() {
+      var out = [];
+      document.querySelectorAll(".pname").forEach(function (inp) { out.push(inp.value.trim()); });
+      return out;
+    }
+    $("add-person").addEventListener("click", function () { buzz(20); addPersonRow(""); refreshCoupleSelects(); });
+
+    /* ================= setup: couples ================= */
+    function fillSelect(sel, names, keepVal) {
+      var cur = keepVal !== undefined ? keepVal : sel.value;
+      sel.innerHTML = "";
+      var o0 = document.createElement("option");
+      o0.value = ""; o0.textContent = t("selectPerson");
+      sel.appendChild(o0);
+      names.forEach(function (nm, i) {
+        var o = document.createElement("option");
+        o.value = String(i); o.textContent = nm || ("#" + (i + 1));
+        sel.appendChild(o);
+      });
+      sel.value = cur;
+      if (sel.value !== cur) sel.value = "";
+    }
+    function addCoupleRow(a, b) {
+      var box = $("crows");
+      var row = document.createElement("div");
+      row.className = "crow";
+      var s1 = document.createElement("select"); s1.className = "txtin csel";
+      var heart = document.createElement("span"); heart.className = "heart"; heart.textContent = "♥";
+      var s2 = document.createElement("select"); s2.className = "txtin csel";
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "iconbtn"; del.textContent = "×";
+      del.setAttribute("aria-label", "remove");
+      del.addEventListener("click", function () { buzz(20); row.remove(); });
+      row.appendChild(s1); row.appendChild(heart); row.appendChild(s2); row.appendChild(del);
+      box.appendChild(row);
+      var names = personNames();
+      fillSelect(s1, names, a !== undefined ? String(a) : "");
+      fillSelect(s2, names, b !== undefined ? String(b) : "");
+    }
+    function refreshCoupleSelects() {
+      var names = personNames();
+      document.querySelectorAll("#crows .crow").forEach(function (row) {
+        var sels = row.querySelectorAll(".csel");
+        fillSelect(sels[0], names);
+        fillSelect(sels[1], names);
+      });
+    }
+    $("add-couple").addEventListener("click", function () { buzz(20); addCoupleRow(); });
+    $("evtitle").addEventListener("input", function () { this.setAttribute("data-user-edited", "1"); });
+
+    /* ================= setup: validation + draw ================= */
+    function readSetup() {
+      var names = personNames();
+      showErr("err-names", null); showErr("err-couples", null); showErr("err-draw", null);
+      if (names.length < 3) { showErr("err-names", t("errNamesFew")); return null; }
+      for (var i = 0; i < names.length; i++) if (!names[i]) { showErr("err-names", t("errNamesEmpty")); return null; }
+      var seen = {};
+      for (i = 0; i < names.length; i++) {
+        var k = names[i].toLowerCase();
+        if (seen[k]) { showErr("err-names", t("errNamesDup")); return null; }
+        seen[k] = true;
+      }
+      var couples = [], inCouple = {};
+      var rows = $("crows").children;
+      for (i = 0; i < rows.length; i++) {
+        var sels = rows[i].querySelectorAll(".csel");
+        var a = sels[0].value, b = sels[1].value;
+        if (a === "" && b === "") continue;
+        if (a === "" || b === "" || a === b) { showErr("err-couples", t("errCoupleSame")); return null; }
+        a = parseInt(a, 10); b = parseInt(b, 10);
+        if (inCouple[a] || inCouple[b]) { showErr("err-couples", t("errCoupleDup")); return null; }
+        inCouple[a] = true; inCouple[b] = true;
+        couples.push([a, b]);
+      }
+      return { title: $("evtitle").value.trim() || t("evTitleDefault"), names: names, couples: couples };
+    }
+    var lastDrawData = null;
+    $("draw-btn").addEventListener("click", function () {
+      buzz([40, 60, 40]);
+      var s = readSetup();
+      if (!s) return;
+      var assign = drawMatching(s.names.length, s.couples, null);
+      if (!assign) { showErr("err-draw", t("errDrawFail")); return; }
+      var data = { v: 1, title: s.title, names: s.names, couples: s.couples, assign: assign };
+      lastDrawData = data;
+      var sb = $("share-base");
+      if (sb && !sb.value && shareBase) sb.value = shareBase;
+      showErr("err-share", null);
+      refreshInviteOutputs();
+      $("draw-ok").classList.add("show");
+      $("draw-ok").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    $("share-base").addEventListener("input", function () {
+      shareBase = this.value.trim();
+      try { localStorage.setItem("ss_sharebase", shareBase); } catch (e) {}
+      showErr("err-share", null);
+      refreshInviteOutputs();
+    });
+    $("copy-url").addEventListener("click", function () {
+      buzz(30);
+      if (!lastDrawData || !inviteUrlFor(lastDrawData)) { showErr("err-share", t("errShareLink")); return; }
+      showErr("err-share", null);
+      copyText($("share-url").value, $("share-url"));
+    });
+    $("copy-msg").addEventListener("click", function () {
+      buzz(30);
+      if (!lastDrawData) return;
+      if (!inviteUrlFor(lastDrawData)) { showErr("err-share", t("errShareLink")); $("share-base").focus(); return; }
+      showErr("err-share", null);
+      copyText(shareMsgFor(lastDrawData), $("share-url"));
+    });
+    $("preview-draw").addEventListener("click", function () { buzz(30); if (lastDrawData) openRoom(codeFor(lastDrawData), true); });
+
+    /* ================= recovery ================= */
+    var recData = null, lastRecData = null;
+    $("rec-load").addEventListener("click", function () {
+      buzz(30);
+      showErr("err-rec", null); showErr("err-rec2", null);
+      $("rec-ok").classList.remove("show");
+      try {
+        recData = dataFromLink($("rec-link").value);
+      } catch (e) {
+        recData = null;
+        showErr("err-rec", t("errRecLink"));
+        $("rec-body").classList.add("hidden");
+        return;
+      }
+      var list = $("rec-list");
+      list.innerHTML = "";
+      recData.names.forEach(function (nm, i) {
+        var li = document.createElement("li");
+        var label = document.createElement("label");
+        var cb = document.createElement("input");
+        cb.type = "checkbox"; cb.value = String(i); cb.className = "rec-check";
+        var span = document.createElement("span"); span.textContent = nm;
+        label.appendChild(cb); label.appendChild(span);
+        li.appendChild(label);
+        list.appendChild(li);
+      });
+      $("rec-body").classList.remove("hidden");
+      $("rec-body").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    $("rec-draw").addEventListener("click", function () {
+      buzz([40, 60, 40]);
+      showErr("err-rec2", null);
+      if (!recData) return;
+      var fixed = [], fixedGiver = {};
+      document.querySelectorAll(".rec-check").forEach(function (cb) {
+        if (cb.checked) {
+          var g = parseInt(cb.value, 10);
+          fixed.push([g, recData.assign[g]]);
+          fixedGiver[g] = true;
+        }
+      });
+      var poolCount = recData.names.length - fixed.length;
+      if (poolCount < 3) { showErr("err-rec2", t("errRecFew")); return; }
+      var assign = drawMatching(recData.names.length, recData.couples || [], fixed);
+      if (!assign) { showErr("err-rec2", t("errRecFail")); return; }
+      var data = { v: 1, title: recData.title, names: recData.names, couples: recData.couples || [], assign: assign };
+      lastRecData = data;
+      showErr("err-rec-share", null);
+      refreshInviteOutputs();
+      $("rec-ok").classList.add("show");
+      $("rec-ok").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    $("rec-copy-url").addEventListener("click", function () {
+      buzz(30);
+      if (!lastRecData || !inviteUrlFor(lastRecData)) { showErr("err-rec-share", t("errShareLink")); return; }
+      showErr("err-rec-share", null);
+      copyText($("rec-share-url").value, $("rec-share-url"));
+    });
+    $("rec-copy-msg").addEventListener("click", function () {
+      buzz(30);
+      if (!lastRecData) return;
+      if (!inviteUrlFor(lastRecData)) { showErr("err-rec-share", t("errShareLink")); return; }
+      showErr("err-rec-share", null);
+      copyText(shareMsgFor(lastRecData), $("rec-share-url"));
+    });
+    $("rec-preview").addEventListener("click", function () { buzz(30); if (lastRecData) openRoom(codeFor(lastRecData), true); });
+
+    /* ================= views ================= */
+    var organizerMode = false;
+    function showView() {
+      var data = currentData();
+      if (data) {
+        $("view-play").classList.remove("hidden");
+        $("view-setup").classList.add("hidden");
+        $("view-home").classList.add("hidden");
+        renderPlay();
+      } else if (organizerMode) {
+        $("view-setup").classList.remove("hidden");
+        $("view-play").classList.add("hidden");
+        $("view-home").classList.add("hidden");
+      } else {
+        /* No room in the URL: never drop a visitor on the organizer screen.
+           Participants get the entry screen (with a paste fallback in case
+           the link lost its room data on the way); the organizer screen is
+           one deliberate tap away. */
+        $("view-home").classList.remove("hidden");
+        $("view-setup").classList.add("hidden");
+        $("view-play").classList.add("hidden");
+      }
+      var has = !!data;
+      $("to-play-from-setup").classList.toggle("hidden", !has);
+      $("preview-back-wrap").classList.toggle("hidden", !(has && fromPreview));
+    }
+    $("to-setup-from-home").addEventListener("click", function () {
+      buzz(20);
+      organizerMode = true;
+      showView();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    $("to-home-from-setup").addEventListener("click", function () {
+      buzz(20);
+      organizerMode = false;
+      fromPreview = false;
+      /* Clear any room parameter a preview left in the URL, otherwise
+         showView() would bounce straight back to the envelope screen. */
+      try { history.replaceState(null, "", location.pathname); } catch (e) {}
+      showView();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    $("join-go").addEventListener("click", function () {
+      buzz(30);
+      showErr("err-join", null);
+      var data;
+      try { data = dataFromLink($("join-text").value); }
+      catch (e) { showErr("err-join", t("errJoin")); return; }
+      openRoom(codeFor(data), false);
+    });
+    $("back-from-preview").addEventListener("click", function () {
+      buzz(20);
+      organizerMode = true;
+      $("view-play").classList.add("hidden");
+      $("view-home").classList.add("hidden");
+      $("view-setup").classList.remove("hidden");
+      $("to-play-from-setup").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    $("to-play-from-setup").addEventListener("click", function () {
+      buzz(20);
+      showView();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    window.addEventListener("hashchange", showView);
+
+    /* ================= participant view ================= */
+    var playData = null, pendingGiver = -1, revealGiver = -1;
+    function lockGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function lockSet(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+
+    function renderPlay() {
+      var data = currentData();
+      playData = data;
+      var grid = $("envgrid");
+      grid.innerHTML = "";
+      if (!data) { $("lockbanner").classList.remove("show"); return; }
+      $("play-title").textContent = data.title || "Secret Santa";
+      var key = dataKey(data);
+      var openedRaw = lockGet(key + "_opened");
+      var opened = openedRaw === null ? -1 : parseInt(openedRaw, 10);
+      var recov = lockGet(key + "_recovery") === "1";
+
+      var banner = $("lockbanner");
+      if (opened >= 0 && data.names[opened]) {
+        banner.textContent = fmt("lockBanner", data.names[opened]);
+        banner.classList.add("show");
+      } else banner.classList.remove("show");
+
+      data.names.forEach(function (nm, i) {
+        var btn = document.createElement("button");
+        btn.type = "button"; btn.className = "env";
+        var isMine = opened === i;
+        var isLocked = opened >= 0 && !isMine;
+        if (isMine) btn.classList.add("opened");
+        if (isLocked) btn.classList.add("locked");
+        if (isMine && recov) btn.classList.add("recovery");
+        var color = ENV_COLORS[i % ENV_COLORS.length];
+        btn.innerHTML =
+          '<span class="paper" style="--env:' + color + '">' +
+            '<span class="flap"></span><span class="fold-l"></span><span class="fold-r"></span>' +
+            '<span class="seal">★</span>' +
+            '<span class="lockic">🔒</span>' +
+          '</span>' +
+          '<span class="ename"></span>' +
+          '<span class="ebadge b-open"></span>' +
+          '<span class="ebadge b-rec"></span>';
+        btn.querySelector(".paper").style.setProperty("--env", color);
+        btn.querySelector(".ename").textContent = nm;
+        btn.querySelector(".b-open").textContent = t("openedBadge");
+        btn.querySelector(".b-rec").textContent = t("recoveryBadge");
+        btn.addEventListener("click", function () { onEnvelopeTap(i); });
+        grid.appendChild(btn);
+      });
+    }
+
+    function openOverlay(id) { $(id).classList.add("show"); }
+    function closeOverlay(id) { $(id).classList.remove("show"); }
+
+    function onEnvelopeTap(i) {
+      if (!playData) return;
+      var key = dataKey(playData);
+      var openedRaw = lockGet(key + "_opened");
+      var opened = openedRaw === null ? -1 : parseInt(openedRaw, 10);
+      if (opened >= 0 && opened !== i) {
+        buzz([60, 40, 60]);
+        $("lock-body").textContent = fmt("lockBody", playData.names[opened]);
+        openOverlay("ov-locked");
+        return;
+      }
+      buzz(30);
+      if (opened === i) { showReveal(i, false); return; }
+      pendingGiver = i;
+      $("c1-name").textContent = playData.names[i];
+      openOverlay("ov-confirm1");
+    }
+
+    $("c1-no").addEventListener("click", function () { buzz(20); closeOverlay("ov-confirm1"); });
+    $("c1-yes").addEventListener("click", function () {
+      buzz(30);
+      closeOverlay("ov-confirm1");
+      openOverlay("ov-confirm2");
+    });
+    $("c2-no").addEventListener("click", function () { buzz(20); closeOverlay("ov-confirm2"); });
+    $("c2-yes").addEventListener("click", function () {
+      buzz([50, 60, 90]);
+      closeOverlay("ov-confirm2");
+      if (pendingGiver < 0 || !playData) return;
+      lockSet(dataKey(playData) + "_opened", String(pendingGiver));
+      showReveal(pendingGiver, true);
+      renderPlay();
+    });
+    $("lock-close").addEventListener("click", function () { buzz(20); closeOverlay("ov-locked"); });
+
+    function showReveal(giver, animate) {
+      revealGiver = giver;
+      var color = ENV_COLORS[giver % ENV_COLORS.length];
+      var dark = ENV_DARK[giver % ENV_DARK.length];
+      var paper = $("reveal-paper");
+      paper.style.setProperty("--env", color);
+      paper.style.setProperty("--envdark", dark);
+      paper.style.background = color;
+      paper.querySelector(".flap").style.background = dark;
+      $("reveal-name").textContent = playData.names[playData.assign[giver]];
+      var stage = $("reveal-stage");
+      stage.classList.remove("opening");
+      openOverlay("ov-reveal");
+      if (animate) {
+        setTimeout(function () {
+          stage.classList.add("opening");
+          buzz([40, 50, 40, 50, 120]);
+          setTimeout(confettiBurst, 650);
+        }, 250);
+      } else {
+        stage.classList.add("opening");
+      }
+    }
+    $("reveal-close").addEventListener("click", function () { buzz(20); closeOverlay("ov-reveal"); });
+    $("reveal-mistake").addEventListener("click", function () {
+      buzz(20);
+      closeOverlay("ov-reveal");
+      openOverlay("ov-mistake");
+    });
+    $("mis-close").addEventListener("click", function () { buzz(20); closeOverlay("ov-mistake"); });
+    $("mis-mark").addEventListener("click", function () {
+      buzz(40);
+      if (playData) lockSet(dataKey(playData) + "_recovery", "1");
+      closeOverlay("ov-mistake");
+      toast(t("misMarked"));
+      renderPlay();
+    });
+
+    /* ================= init ================= */
+    for (var pi = 0; pi < 6; pi++) addPersonRow("");
+    addCoupleRow(); addCoupleRow();
+    if (shareBase) $("share-base").value = shareBase;
+    showView();
+    applyLang();
+    </script>
+  </body>
+</html>
