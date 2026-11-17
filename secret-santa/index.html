@@ -967,13 +967,83 @@
       if (!obj || !Array.isArray(obj.names) || !Array.isArray(obj.assign)) throw new Error("bad");
       return obj;
     }
+    /* Room codes can legitimately contain "=" characters: encodeData
+       reverses the base64 string, so any padding "=" ends up at the FRONT
+       of the payload (codes look like "x1.==…" or "x1.=…"). Any extractor
+       whose character class omits "=" truncates those codes and decoding
+       fails — that is why pasting a link broke while opening the same link
+       directly (whose parser in currentData does accept "=") kept working.
+       The extractors below therefore accept the full code alphabet
+       (letters, digits, ".", "_", "-", "="), collect every candidate in
+       the pasted text, and return the first one that actually decodes. */
+    function extractCodeCandidates(s) {
+      var codes = [], seen = {};
+      function push(c) { if (c && !seen[c]) { seen[c] = 1; codes.push(c); } }
+      var m;
+      var reParam = /[?&#]p=([A-Za-z0-9._=-]+)/g;
+      while ((m = reParam.exec(s)) !== null) push(m[1]);
+      var reBare = /(x1\.[A-Za-z0-9._=-]+)/g;
+      while ((m = reBare.exec(s)) !== null) push(m[1]);
+      push(String(s).trim());
+      return codes;
+    }
+    function tryDecodeCandidate(c) {
+      /* Try the candidate as-is, then with a few trailing characters
+         trimmed, so punctuation glued to the end of a pasted link
+         (a sentence-ending "。" is not in the alphabet, but ")", "]",
+         or a stray "." can be captured) does not spoil the parse. */
+      var tries = 0;
+      while (c && c.indexOf("x1.") === 0 && tries < 10) {
+        try { return decodeData(c); } catch (e) { /* trim and retry */ }
+        c = c.slice(0, -1);
+        tries++;
+      }
+      return null;
+    }
+    function tryDataFromText(s) {
+      var codes = extractCodeCandidates(s);
+      for (var i = 0; i < codes.length; i++) {
+        var d = tryDecodeCandidate(codes[i]);
+        if (d) return d;
+      }
+      return null;
+    }
     function dataFromLink(text) {
       var s = String(text || "");
-      var m = /[#?&]p=(x1\.[A-Za-z0-9_-]+)/.exec(s);
-      if (m) return decodeData(m[1]);
-      m = /(x1\.[A-Za-z0-9_-]+)/.exec(s);
-      if (m) return decodeData(m[1]);
-      return decodeData(s.trim());
+      var d = tryDataFromText(s);
+      if (d) return d;
+      /* A link broken across lines by a chat app's wrapping: retry with
+         all whitespace removed. */
+      var squished = s.replace(/\s+/g, "");
+      if (squished !== s) { d = tryDataFromText(squished); if (d) return d; }
+      /* A link that arrived percent-encoded (e.g. "=" as "%3D"). */
+      try {
+        var dec = decodeURIComponent(s);
+        if (dec !== s) { d = tryDataFromText(dec); if (d) return d; }
+      } catch (e) { /* not percent-encoded text: ignore */ }
+      if (s.indexOf("&amp;") !== -1) { d = tryDataFromText(s.replace(/&amp;/g, "&")); if (d) return d; }
+      throw new Error("bad");
+    }
+    function shortSlugFromText(text) {
+      var m = /giancuatro\.github\.io\/s\/([A-Za-z0-9]{4,})/.exec(String(text || ""));
+      return m ? m[1] : null;
+    }
+    /* Async variant: a short link (giancuatro.github.io/s/<slug>/) carries
+       no room data itself, so when the pasted text holds no readable code
+       but does hold a short link, fetch that redirect page (it lives on
+       the same GitHub Pages site) and read the long invitation URL out of
+       it. Resolves with the room data; rejects when nothing readable is
+       found, leaving the caller to show its usual error message. */
+    function dataFromLinkAsync(text) {
+      try { return Promise.resolve(dataFromLink(text)); } catch (e) { /* try the short link */ }
+      var slug = shortSlugFromText(text);
+      if (!slug || typeof fetch !== "function") return Promise.reject(new Error("bad"));
+      return fetch("https://giancuatro.github.io/s/" + slug + "/")
+        .then(function (res) {
+          if (!res.ok) throw new Error("bad");
+          return res.text();
+        })
+        .then(function (html) { return dataFromLink(html); });
     }
     function currentData() {
       var codes = [];
@@ -1602,14 +1672,20 @@
       buzz(30);
       showErr("err-rec", null); showErr("err-rec2", null);
       $("rec-ok").classList.remove("show");
-      try {
-        recData = dataFromLink($("rec-link").value);
-      } catch (e) {
+      var text = $("rec-link").value;
+      var parsed = null;
+      try { parsed = dataFromLink(text); } catch (e) { /* try the short link below */ }
+      if (parsed) { loadRecovery(parsed); return; }
+      dataFromLinkAsync(text).then(function (d) {
+        loadRecovery(d);
+      }).catch(function () {
         recData = null;
         showErr("err-rec", t("errRecLink"));
         $("rec-body").classList.add("hidden");
-        return;
-      }
+      });
+    });
+    function loadRecovery(data) {
+      recData = data;
       var list = $("rec-list");
       list.innerHTML = "";
       recData.names.forEach(function (nm, i) {
@@ -1624,7 +1700,7 @@
       });
       $("rec-body").classList.remove("hidden");
       $("rec-body").scrollIntoView({ behavior: "smooth", block: "center" });
-    });
+    }
     $("rec-draw").addEventListener("click", function () {
       buzz([40, 60, 40]);
       showErr("err-rec2", null);
@@ -1723,10 +1799,15 @@
     $("join-go").addEventListener("click", function () {
       buzz(30);
       showErr("err-join", null);
-      var data;
-      try { data = dataFromLink($("join-text").value); }
-      catch (e) { showErr("err-join", t("errJoin")); return; }
-      openRoom(codeFor(data), false);
+      var text = $("join-text").value;
+      var data = null;
+      try { data = dataFromLink(text); } catch (e) { /* try the short link below */ }
+      if (data) { openRoom(codeFor(data), false); return; }
+      dataFromLinkAsync(text).then(function (d) {
+        openRoom(codeFor(d), false);
+      }).catch(function () {
+        showErr("err-join", t("errJoin"));
+      });
     });
     $("back-from-preview").addEventListener("click", function () {
       buzz(20);
