@@ -296,6 +296,27 @@
       }
       #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
       .hidden{ display:none !important; }
+
+      /* ---------- short link settings / status ---------- */
+      .settings-details summary{
+        cursor:pointer; font-weight:800; font-size:1.2rem; line-height:1.4;
+        min-height:44px; display:flex; align-items:center; gap:8px; list-style:none;
+      }
+      .settings-details summary::-webkit-details-marker{ display:none; }
+      .settings-details summary::before{ content:"▸"; color:var(--green-btn); font-size:1.1rem; }
+      .settings-details[open ] summary::before{ content:"▾"; }
+      .settings-details ul{ margin:6px 0 10px; padding-left:1.3em; color:#7a6753; font-size:.95rem; line-height:1.7; }
+      .textlink{ color:var(--green-btn-dark); font-weight:700; overflow-wrap:anywhere; }
+      .tokenstatus{ margin-top:10px; font-weight:700; font-size:.95rem; color:#5d4a38; line-height:1.6; }
+      .tokenbtns{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+      .tokenbtns .copybtn{ min-height:48px; }
+      .tokenbtns .ghostbtn{ width:auto; flex:1; }
+      .tokenbtns .copybtn{ flex:1; }
+      .shortstatus{ margin-top:12px; font-weight:700; line-height:1.65; font-size:.98rem; }
+      .shortstatus.fail{ color:#8c5a20; }
+      .backup-wrap{ margin-top:14px; padding-top:12px; border-top:1.5px dashed var(--line); }
+      .backup-wrap .flabel{ font-size:.9rem; color:#7a6753; margin-top:0; }
+      .backup-wrap .txtin{ font-size:.82rem; }
     </style>
   </head>
   <body>
@@ -392,10 +413,18 @@
           <div class="err" id="err-draw"></div>
           <div class="okbox" id="draw-ok">
             <div data-i18n="drawOkMsg"></div>
+            <div class="shortstatus hidden" id="draw-short-status" role="status"></div>
             <label class="flabel" data-i18n="inviteUrlLabel"></label>
             <div class="linkrow">
               <input class="txtin" id="share-url" type="text" readonly />
               <button type="button" class="copybtn" id="copy-url" data-i18n="copyUrlBtn"></button>
+            </div>
+            <div class="backup-wrap hidden" id="draw-backup">
+              <label class="flabel" data-i18n="shortBackupLabel"></label>
+              <div class="linkrow">
+                <input class="txtin" id="share-url-long" type="text" readonly />
+                <button type="button" class="copybtn" id="copy-url-long" data-i18n="copyUrlBtn"></button>
+              </div>
             </div>
             <div class="err" id="err-share"></div>
             <button type="button" class="bigbtn green" id="copy-msg" style="margin-top:12px;" data-i18n="copyMsgBtn"></button>
@@ -403,6 +432,26 @@
             <button type="button" class="ghostbtn" id="new-room" style="margin-top:10px;" data-i18n="newRoomBtn"></button>
             <p style="margin:12px 0 0; font-weight:500; font-size:.93rem;" data-i18n="drawOkNote"></p>
           </div>
+        </div>
+
+        <div class="card green-top">
+          <details class="settings-details" id="short-settings">
+            <summary data-i18n="shortSettingsTitle"></summary>
+            <p class="hint" data-i18n="shortSettingsHint"></p>
+            <ul>
+              <li data-i18n="shortGuide1"></li>
+              <li data-i18n="shortGuide2"></li>
+              <li data-i18n="shortGuide3"></li>
+            </ul>
+            <p class="hint"><a class="textlink" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" data-i18n="shortGuideLink"></a></p>
+            <label class="flabel" for="gh-token-input" data-i18n="shortTokenLabel"></label>
+            <input class="txtin" id="gh-token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" data-i18n-ph="shortTokenPh" />
+            <div class="tokenstatus" id="gh-token-status" role="status"></div>
+            <div class="tokenbtns">
+              <button type="button" class="copybtn" id="gh-token-save" data-i18n="shortSaveBtn"></button>
+              <button type="button" class="ghostbtn" id="gh-token-delete" data-i18n="shortDeleteBtn"></button>
+            </div>
+          </details>
         </div>
 
         <div class="card green-top">
@@ -419,10 +468,18 @@
             <div class="err" id="err-rec2"></div>
             <div class="okbox" id="rec-ok">
               <div data-i18n="recOkMsg"></div>
+              <div class="shortstatus hidden" id="rec-short-status" role="status"></div>
               <label class="flabel" data-i18n="inviteUrlLabel"></label>
               <div class="linkrow">
                 <input class="txtin" id="rec-share-url" type="text" readonly />
                 <button type="button" class="copybtn" id="rec-copy-url" data-i18n="copyUrlBtn"></button>
+              </div>
+              <div class="backup-wrap hidden" id="rec-backup">
+                <label class="flabel" data-i18n="shortBackupLabel"></label>
+                <div class="linkrow">
+                  <input class="txtin" id="rec-share-url-long" type="text" readonly />
+                  <button type="button" class="copybtn" id="rec-copy-url-long" data-i18n="copyUrlBtn"></button>
+                </div>
               </div>
               <div class="err" id="err-rec-share"></div>
               <button type="button" class="bigbtn green" id="rec-copy-msg" style="margin-top:12px;" data-i18n="copyMsgBtn"></button>
@@ -600,7 +657,27 @@
         misMarkBtn: "目印をつけて閉じる",
         misMarked: "目印をつけました。幹事さんに連絡してください",
         lockTitle: "この封筒は開けられません",
-        lockBody: "このスマホでは、すでに「{name}」さんの封筒を開けています。1台のスマホで開けられるのは1人分だけです。自分の封筒はタップすれば見られます。"
+        lockBody: "このスマホでは、すでに「{name}」さんの封筒を開けています。1台のスマホで開けられるのは1人分だけです。自分の封筒はタップすれば見られます。",
+        shortSettingsTitle: "短いリンク設定",
+        shortSettingsHint: "設定すると、抽選のたびに短い招待リンク（giancuatro.github.io/s/…）が自動で作られるようになります。設定は1回だけです。トークンはこの端末の中にだけ保存され、作られるリンクやメッセージには含まれません。",
+        shortGuide1: "対象リポジトリは giancuatro/giancuatro.github.io のみを選んでください",
+        shortGuide2: "権限は Contents の読み書き（Read and write）だけを許可してください",
+        shortGuide3: "作成したトークンを下の欄に貼り付けて「保存する」を押してください",
+        shortGuideLink: "GitHubでトークンを作る（作成ページを開く）",
+        shortTokenLabel: "GitHubトークン",
+        shortTokenPh: "トークンを貼り付け",
+        shortSaveBtn: "保存する",
+        shortDeleteBtn: "削除する",
+        shortSaved: "トークンは保存済みです（この端末のみ）。",
+        shortNotSaved: "トークンはまだ保存されていません。",
+        shortTokenSaved: "トークンを保存しました",
+        shortTokenDeleted: "トークンを削除しました",
+        shortTokenEmpty: "トークンを貼り付けてから保存してください",
+        shortCreating: "短いリンクを作成中…",
+        shortReady: "短いリンクができました！",
+        shortNoteDelay: "※ 短いリンクが開けるようになるまで1分ほどかかります。すぐ開けないときは少し待ってから開いてください。",
+        shortFail: "短いリンクは作れませんでした。長いリンクをお使いください。",
+        shortBackupLabel: "予備の長いリンク"
       },
       en: {
         homeSub: "This is the page for the gift-exchange envelopes. Opening the invitation link from the organizer takes you straight to the envelopes.",
@@ -691,7 +768,27 @@
         misMarkBtn: "Mark it and close",
         misMarked: "Marked. Please contact the organizer",
         lockTitle: "This envelope can't be opened",
-        lockBody: "This phone has already opened the envelope for “{name}”. Only one person's envelope can be opened per phone. Tap your own envelope to see yours again."
+        lockBody: "This phone has already opened the envelope for “{name}”. Only one person's envelope can be opened per phone. Tap your own envelope to see yours again.",
+        shortSettingsTitle: "Short link settings",
+        shortSettingsHint: "Once set up, a short invitation link (giancuatro.github.io/s/…) is created automatically with every draw. You only set this up once. The token is stored only on this device and is never included in any link or message that is created.",
+        shortGuide1: "Select only the repository giancuatro/giancuatro.github.io",
+        shortGuide2: "Grant only Contents read and write permission",
+        shortGuide3: "Paste the token you created into the field below and tap “Save”",
+        shortGuideLink: "Create a token on GitHub (opens the creation page)",
+        shortTokenLabel: "GitHub token",
+        shortTokenPh: "Paste your token",
+        shortSaveBtn: "Save",
+        shortDeleteBtn: "Delete",
+        shortSaved: "A token is saved (on this device only).",
+        shortNotSaved: "No token has been saved yet.",
+        shortTokenSaved: "Token saved",
+        shortTokenDeleted: "Token deleted",
+        shortTokenEmpty: "Paste a token first, then save",
+        shortCreating: "Creating the short link…",
+        shortReady: "Your short link is ready!",
+        shortNoteDelay: "* The short link may take about a minute before it opens. If it does not open right away, please wait a moment and try again.",
+        shortFail: "The short link could not be created. Please use the long link.",
+        shortBackupLabel: "Backup long link"
       },
       es: {
         homeSub: "Esta es la página de los sobres del intercambio de regalos. Al abrir el enlace de invitación del organizador llegarás directamente a los sobres.",
@@ -782,7 +879,27 @@
         misMarkBtn: "Marcarlo y cerrar",
         misMarked: "Marcado. Avisa al organizador, por favor",
         lockTitle: "Este sobre no se puede abrir",
-        lockBody: "Este teléfono ya abrió el sobre de «{name}». Solo se puede abrir el sobre de una persona por teléfono. Toca tu propio sobre para volver a ver el tuyo."
+        lockBody: "Este teléfono ya abrió el sobre de «{name}». Solo se puede abrir el sobre de una persona por teléfono. Toca tu propio sobre para volver a ver el tuyo.",
+        shortSettingsTitle: "Ajustes del enlace corto",
+        shortSettingsHint: "Una vez configurado, se creará automáticamente un enlace de invitación corto (giancuatro.github.io/s/…) en cada sorteo. Solo hay que configurarlo una vez. El token se guarda únicamente en este dispositivo y nunca se incluye en los enlaces ni mensajes creados.",
+        shortGuide1: "Selecciona solo el repositorio giancuatro/giancuatro.github.io",
+        shortGuide2: "Concede únicamente el permiso de lectura y escritura de Contents",
+        shortGuide3: "Pega el token creado en el campo de abajo y pulsa «Guardar»",
+        shortGuideLink: "Crear un token en GitHub (abre la página de creación)",
+        shortTokenLabel: "Token de GitHub",
+        shortTokenPh: "Pega tu token",
+        shortSaveBtn: "Guardar",
+        shortDeleteBtn: "Eliminar",
+        shortSaved: "Hay un token guardado (solo en este dispositivo).",
+        shortNotSaved: "Todavía no se ha guardado ningún token.",
+        shortTokenSaved: "Token guardado",
+        shortTokenDeleted: "Token eliminado",
+        shortTokenEmpty: "Primero pega un token y luego guárdalo",
+        shortCreating: "Creando el enlace corto…",
+        shortReady: "¡Tu enlace corto está listo!",
+        shortNoteDelay: "* El enlace corto puede tardar alrededor de un minuto en abrirse. Si no se abre enseguida, espera un momento e inténtalo de nuevo.",
+        shortFail: "No se pudo crear el enlace corto. Usa el enlace largo, por favor.",
+        shortBackupLabel: "Enlace largo de reserva"
       }
     };
     var lang = "ja";
@@ -875,8 +992,161 @@
       var sep = base.indexOf("?") === -1 ? "?" : "&";
       return base + sep + "p=" + code + "#p=" + code;
     }
-    function shareMsgFor(data) {
-      return t("shareMsg").replace("{title}", data.title || "").replace("{url}", inviteUrlFor(data));
+    function shareMsgFor(data, url) {
+      return t("shareMsg").replace("{title}", data.title || "").replace("{url}", url || inviteUrlFor(data));
+    }
+
+    /* ================= short links (GitHub Pages redirect files) =================
+       The organizer may save a GitHub fine-grained personal access token on
+       this device only (localStorage). It is sent only to api.github.com and
+       is never included in any generated link, message, or screen. When a
+       token is present, each draw also writes a tiny redirect file
+       s/<slug>/index.html into giancuatro/giancuatro.github.io so the shared
+       link can be the short https://giancuatro.github.io/s/<slug>/ . */
+    var GH_REPO_API = "https://api.github.com/repos/giancuatro/giancuatro.github.io/contents/";
+    var SHORT_BASE = "https://giancuatro.github.io/s/";
+    function ghToken() {
+      try { return localStorage.getItem("ss_gh_token") || ""; } catch (e) { return ""; }
+    }
+    function ghTokenSave(v) { try { localStorage.setItem("ss_gh_token", v); } catch (e) {} }
+    function ghTokenRemove() { try { localStorage.removeItem("ss_gh_token"); } catch (e) {} }
+    function refreshTokenUI() {
+      var st = document.getElementById("gh-token-status");
+      if (!st) return;
+      var has = !!ghToken();
+      st.textContent = has ? t("shortSaved") : t("shortNotSaved");
+      var del = document.getElementById("gh-token-delete");
+      if (del) del.disabled = !has;
+    }
+    function randomSlug() {
+      var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+      var out = "";
+      try {
+        var buf = new Uint8Array(6);
+        crypto.getRandomValues(buf);
+        for (var i = 0; i < 6; i++) out += chars[buf[i] % chars.length];
+      } catch (e) {
+        for (var j = 0; j < 6; j++) out += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return out;
+    }
+    function b64Utf8(str) { return btoa(unescape(encodeURIComponent(str))); }
+    function escAttr(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    }
+    function redirectHtml(longUrl) {
+      var esc = escAttr(longUrl);
+      return "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"utf-8\" />\n" +
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n" +
+        "<title>シークレットサンタ</title>\n" +
+        "<meta http-equiv=\"refresh\" content=\"0; url=" + esc + "\" />\n" +
+        "<script>location.replace(" + JSON.stringify(longUrl) + ");<\/script>\n" +
+        "</head>\n<body>\n" +
+        "<p>シークレットサンタの封筒へ移動します… 自動で開かない場合は <a href=\"" + esc + "\">こちらをタップ</a> してください。</p>\n" +
+        "</body>\n</html>\n";
+    }
+    /* Resolves to the short URL on success, or null on any failure
+       (no token, network error, auth error, slug collisions). Never throws
+       and never surfaces error details or the token. */
+    function createShortLink(longUrl) {
+      var token = ghToken();
+      if (!token || typeof fetch !== "function") return Promise.resolve(null);
+      var headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+      };
+      function attempt(triesLeft) {
+        var slug = randomSlug();
+        var path = "s/" + slug + "/index.html";
+        return fetch(GH_REPO_API + path, { method: "GET", headers: headers }).then(function (res) {
+          if (res.status === 404) {
+            /* slug is free: create the redirect file */
+            var body = {
+              message: "Add short link s/" + slug,
+              content: b64Utf8(redirectHtml(longUrl))
+            };
+            return fetch(GH_REPO_API + path, {
+              method: "PUT",
+              headers: Object.assign({ "Content-Type": "application/json" }, headers),
+              body: JSON.stringify(body)
+            }).then(function (putRes) {
+              if (putRes.status === 200 || putRes.status === 201) return SHORT_BASE + slug + "/";
+              return null;
+            });
+          }
+          if (res.status === 200) {
+            /* slug already taken: regenerate, up to 5 tries in total */
+            if (triesLeft > 1) return attempt(triesLeft - 1);
+            return null;
+          }
+          return null;
+        });
+      }
+      try {
+        return attempt(5).catch(function () { return null; });
+      } catch (e) {
+        return Promise.resolve(null);
+      }
+    }
+    var lastDrawShortUrl = "", lastRecShortUrl = "";
+    var drawShortState = "", recShortState = ""; /* "", "creating", "ok", "fail" */
+    var drawShortSeq = 0, recShortSeq = 0;
+    function setShortStatus(el, state) {
+      if (!el) return;
+      if (!state) { el.textContent = ""; el.classList.add("hidden"); el.classList.remove("fail"); return; }
+      el.classList.remove("hidden");
+      if (state === "creating") { el.textContent = t("shortCreating"); el.classList.remove("fail"); }
+      else if (state === "ok") { el.textContent = t("shortReady") + " " + t("shortNoteDelay"); el.classList.remove("fail"); }
+      else { el.textContent = t("shortFail"); el.classList.add("fail"); }
+    }
+    function updateDrawOutputs() {
+      if (typeof lastDrawData === "undefined" || !lastDrawData) return;
+      var longUrl = inviteUrlFor(lastDrawData);
+      var urlEl = document.getElementById("share-url");
+      if (urlEl) urlEl.value = lastDrawShortUrl || longUrl;
+      var longEl = document.getElementById("share-url-long");
+      if (longEl) longEl.value = longUrl;
+      var backup = document.getElementById("draw-backup");
+      if (backup) backup.classList.toggle("hidden", !lastDrawShortUrl);
+      setShortStatus(document.getElementById("draw-short-status"), drawShortState);
+    }
+    function updateRecOutputs() {
+      if (typeof lastRecData === "undefined" || !lastRecData) return;
+      var longUrl = inviteUrlFor(lastRecData);
+      var urlEl = document.getElementById("rec-share-url");
+      if (urlEl) urlEl.value = lastRecShortUrl || longUrl;
+      var longEl = document.getElementById("rec-share-url-long");
+      if (longEl) longEl.value = longUrl;
+      var backup = document.getElementById("rec-backup");
+      if (backup) backup.classList.toggle("hidden", !lastRecShortUrl);
+      setShortStatus(document.getElementById("rec-short-status"), recShortState);
+    }
+    /* Kick off short-link creation for a fresh draw / re-draw. Runs in the
+       background: the long link is usable immediately either way. */
+    function startShortLink(kind, data) {
+      var longUrl = inviteUrlFor(data);
+      if (!ghToken()) {
+        if (kind === "draw") { drawShortState = "fail"; updateDrawOutputs(); }
+        else { recShortState = "fail"; updateRecOutputs(); }
+        return;
+      }
+      var seq;
+      if (kind === "draw") { seq = ++drawShortSeq; drawShortState = "creating"; updateDrawOutputs(); }
+      else { seq = ++recShortSeq; recShortState = "creating"; updateRecOutputs(); }
+      createShortLink(longUrl).then(function (shortUrl) {
+        if (kind === "draw") {
+          if (seq !== drawShortSeq) return;
+          if (shortUrl) { lastDrawShortUrl = shortUrl; drawShortState = "ok"; }
+          else drawShortState = "fail";
+          updateDrawOutputs();
+        } else {
+          if (seq !== recShortSeq) return;
+          if (shortUrl) { lastRecShortUrl = shortUrl; recShortState = "ok"; }
+          else recShortState = "fail";
+          updateRecOutputs();
+        }
+      });
     }
     var fromPreview = false;
     function openRoom(code, isPreview) {
@@ -892,10 +1162,8 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     function refreshInviteOutputs() {
-      var urlEl = $("share-url");
-      if (urlEl && typeof lastDrawData !== "undefined" && lastDrawData) urlEl.value = inviteUrlFor(lastDrawData);
-      var rEl = $("rec-share-url");
-      if (rEl && typeof lastRecData !== "undefined" && lastRecData) rEl.value = inviteUrlFor(lastRecData);
+      updateDrawOutputs();
+      updateRecOutputs();
     }
     function dataKey(data) {
       var s = data.names.join("|") + "#" + data.assign.join(",");
@@ -1036,6 +1304,8 @@
       if (ev && ev.getAttribute("data-user-edited") !== "1") ev.value = t("evTitleDefault");
       refreshNamePlaceholders();
       refreshCoupleSelects();
+      refreshTokenUI();
+      refreshInviteOutputs();
       renderPlay();
     }
     document.querySelectorAll(".langbar button").forEach(function (b) {
@@ -1163,10 +1433,14 @@
       if (!assign) { showErr("err-draw", t("errDrawFail")); return; }
       var data = { v: 1, title: s.title, names: s.names, couples: s.couples, assign: assign };
       lastDrawData = data;
+      lastDrawShortUrl = "";
+      drawShortState = "";
+      drawShortSeq++;
       showErr("err-share", null);
       refreshInviteOutputs();
       $("draw-ok").classList.add("show");
       $("draw-ok").scrollIntoView({ behavior: "smooth", block: "center" });
+      startShortLink("draw", data);
     });
     $("copy-url").addEventListener("click", function () {
       buzz(30);
@@ -1182,15 +1456,28 @@
       refreshInviteOutputs();
       if (!$("share-url").value) { showErr("err-share", t("errShareLink")); return; }
       showErr("err-share", null);
-      copyText(shareMsgFor(lastDrawData), $("share-url"));
+      copyText(shareMsgFor(lastDrawData, $("share-url").value), $("share-url"));
+    });
+    $("copy-url-long").addEventListener("click", function () {
+      buzz(30);
+      if (!lastDrawData) return;
+      refreshInviteOutputs();
+      if (!$("share-url-long").value) return;
+      copyText($("share-url-long").value, $("share-url-long"));
     });
     $("preview-draw").addEventListener("click", function () { buzz(30); if (lastDrawData) openRoom(codeFor(lastDrawData), true); });
     $("new-room").addEventListener("click", function () {
       buzz(20);
       lastDrawData = null;
+      lastDrawShortUrl = "";
+      drawShortState = "";
+      drawShortSeq++;
       $("draw-ok").classList.remove("show");
       showErr("err-share", null); showErr("err-draw", null); showErr("err-names", null); showErr("err-couples", null);
       $("share-url").value = "";
+      $("share-url-long").value = "";
+      $("draw-backup").classList.add("hidden");
+      setShortStatus($("draw-short-status"), "");
       $("prows").innerHTML = "";
       for (var ni = 0; ni < 6; ni++) addPersonRow("");
       $("crows").innerHTML = "";
@@ -1202,6 +1489,25 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
       toast(t("newRoomReady"));
     });
+
+    /* ================= short link settings (token) ================= */
+    $("gh-token-save").addEventListener("click", function () {
+      buzz(30);
+      var v = $("gh-token-input").value.trim();
+      if (!v) { toast(t("shortTokenEmpty")); return; }
+      ghTokenSave(v);
+      $("gh-token-input").value = "";
+      refreshTokenUI();
+      toast(t("shortTokenSaved"));
+    });
+    $("gh-token-delete").addEventListener("click", function () {
+      buzz(20);
+      ghTokenRemove();
+      $("gh-token-input").value = "";
+      refreshTokenUI();
+      toast(t("shortTokenDeleted"));
+    });
+    refreshTokenUI();
 
     /* ================= recovery ================= */
     var recData = null, lastRecData = null;
@@ -1250,10 +1556,14 @@
       if (!assign) { showErr("err-rec2", t("errRecFail")); return; }
       var data = { v: 1, title: recData.title, names: recData.names, couples: recData.couples || [], assign: assign };
       lastRecData = data;
+      lastRecShortUrl = "";
+      recShortState = "";
+      recShortSeq++;
       showErr("err-rec-share", null);
       refreshInviteOutputs();
       $("rec-ok").classList.add("show");
       $("rec-ok").scrollIntoView({ behavior: "smooth", block: "center" });
+      startShortLink("rec", data);
     });
     $("rec-copy-url").addEventListener("click", function () {
       buzz(30);
@@ -1269,7 +1579,14 @@
       refreshInviteOutputs();
       if (!$("rec-share-url").value) { showErr("err-rec-share", t("errShareLink")); return; }
       showErr("err-rec-share", null);
-      copyText(shareMsgFor(lastRecData), $("rec-share-url"));
+      copyText(shareMsgFor(lastRecData, $("rec-share-url").value), $("rec-share-url"));
+    });
+    $("rec-copy-url-long").addEventListener("click", function () {
+      buzz(30);
+      if (!lastRecData) return;
+      refreshInviteOutputs();
+      if (!$("rec-share-url-long").value) return;
+      copyText($("rec-share-url-long").value, $("rec-share-url-long"));
     });
     $("rec-preview").addEventListener("click", function () { buzz(30); if (lastRecData) openRoom(codeFor(lastRecData), true); });
 
