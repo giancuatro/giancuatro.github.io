@@ -450,7 +450,9 @@
             <div class="tokenbtns">
               <button type="button" class="copybtn" id="gh-token-save" data-i18n="shortSaveBtn"></button>
               <button type="button" class="ghostbtn" id="gh-token-delete" data-i18n="shortDeleteBtn"></button>
+              <button type="button" class="ghostbtn" id="gh-token-test" data-i18n="shortTestBtn"></button>
             </div>
+            <div class="shortstatus hidden" id="gh-test-result" role="status"></div>
           </details>
         </div>
 
@@ -677,7 +679,17 @@
         shortReady: "短いリンクができました！",
         shortNoteDelay: "※ 短いリンクが開けるようになるまで1分ほどかかります。すぐ開けないときは少し待ってから開いてください。",
         shortFail: "短いリンクは作れませんでした。長いリンクをお使いください。",
-        shortBackupLabel: "予備の長いリンク"
+        shortBackupLabel: "予備の長いリンク",
+        shortTestBtn: "接続をテスト",
+        shortTesting: "接続をテスト中…",
+        shortTestOk: "接続OK：短いリンクを作成できます",
+        shortTestFail: "接続できませんでした（GitHub応答: {code}）",
+        shortTestFailNet: "接続できませんでした（ネットワークエラー）",
+        shortTestNoToken: "トークンが保存されていないため、テストできません。まずトークンを保存してください。",
+        shortGhResponse: "GitHub応答",
+        shortHint401: "トークンの文字列が違うか、無効になっています",
+        shortHint403: "権限が不足しています",
+        shortHint404: "このリポジトリへのアクセス権がありません"
       },
       en: {
         homeSub: "This is the page for the gift-exchange envelopes. Opening the invitation link from the organizer takes you straight to the envelopes.",
@@ -788,7 +800,17 @@
         shortReady: "Your short link is ready!",
         shortNoteDelay: "* The short link may take about a minute before it opens. If it does not open right away, please wait a moment and try again.",
         shortFail: "The short link could not be created. Please use the long link.",
-        shortBackupLabel: "Backup long link"
+        shortBackupLabel: "Backup long link",
+        shortTestBtn: "Test connection",
+        shortTesting: "Testing the connection…",
+        shortTestOk: "Connection OK: short links can be created",
+        shortTestFail: "Could not connect (GitHub response: {code})",
+        shortTestFailNet: "Could not connect (network error)",
+        shortTestNoToken: "No token is saved, so the connection cannot be tested. Please save a token first.",
+        shortGhResponse: "GitHub response",
+        shortHint401: "The token is incorrect or invalid",
+        shortHint403: "Insufficient permissions",
+        shortHint404: "No access to this repository"
       },
       es: {
         homeSub: "Esta es la página de los sobres del intercambio de regalos. Al abrir el enlace de invitación del organizador llegarás directamente a los sobres.",
@@ -899,7 +921,17 @@
         shortReady: "¡Tu enlace corto está listo!",
         shortNoteDelay: "* El enlace corto puede tardar alrededor de un minuto en abrirse. Si no se abre enseguida, espera un momento e inténtalo de nuevo.",
         shortFail: "No se pudo crear el enlace corto. Usa el enlace largo, por favor.",
-        shortBackupLabel: "Enlace largo de reserva"
+        shortBackupLabel: "Enlace largo de reserva",
+        shortTestBtn: "Probar conexión",
+        shortTesting: "Probando la conexión…",
+        shortTestOk: "Conexión correcta: se pueden crear enlaces cortos",
+        shortTestFail: "No se pudo conectar (respuesta de GitHub: {code})",
+        shortTestFailNet: "No se pudo conectar (error de red)",
+        shortTestNoToken: "No hay ningún token guardado, por lo que no se puede probar la conexión. Guarda primero un token.",
+        shortGhResponse: "respuesta de GitHub",
+        shortHint401: "El token es incorrecto o no es válido",
+        shortHint403: "Permisos insuficientes",
+        shortHint404: "Sin acceso a este repositorio"
       }
     };
     var lang = "ja";
@@ -1017,6 +1049,8 @@
       st.textContent = has ? t("shortSaved") : t("shortNotSaved");
       var del = document.getElementById("gh-token-delete");
       if (del) del.disabled = !has;
+      var testResult = document.getElementById("gh-test-result");
+      if (testResult) { testResult.textContent = ""; testResult.classList.add("hidden"); testResult.classList.remove("fail"); }
     }
     function randomSlug() {
       var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -1045,17 +1079,28 @@
         "<p>シークレットサンタの封筒へ移動します… 自動で開かない場合は <a href=\"" + esc + "\">こちらをタップ</a> してください。</p>\n" +
         "</body>\n</html>\n";
     }
-    /* Resolves to the short URL on success, or null on any failure
-       (no token, network error, auth error, slug collisions). Never throws
-       and never surfaces error details or the token. */
-    function createShortLink(longUrl) {
-      var token = ghToken();
-      if (!token || typeof fetch !== "function") return Promise.resolve(null);
-      var headers = {
+    function ghHint(status) {
+      if (status === 401) return t("shortHint401");
+      if (status === 403) return t("shortHint403");
+      if (status === 404) return t("shortHint404");
+      return "";
+    }
+    function ghHeaders(token) {
+      return {
         "Authorization": "Bearer " + token,
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28"
       };
+    }
+    /* Resolves to { url, status }: url is the short URL on success, or
+       null on any failure; status is the GitHub HTTP status that caused
+       the failure (null for no token, network errors, or slug-collision
+       exhaustion). Never throws and never exposes the token itself —
+       only the numeric status code is surfaced for diagnosis. */
+    function createShortLink(longUrl) {
+      var token = ghToken();
+      if (!token || typeof fetch !== "function") return Promise.resolve({ url: null, status: null });
+      var headers = ghHeaders(token);
       function attempt(triesLeft) {
         var slug = randomSlug();
         var path = "s/" + slug + "/index.html";
@@ -1071,34 +1116,42 @@
               headers: Object.assign({ "Content-Type": "application/json" }, headers),
               body: JSON.stringify(body)
             }).then(function (putRes) {
-              if (putRes.status === 200 || putRes.status === 201) return SHORT_BASE + slug + "/";
-              return null;
+              if (putRes.status === 200 || putRes.status === 201) return { url: SHORT_BASE + slug + "/", status: null };
+              return { url: null, status: putRes.status };
             });
           }
           if (res.status === 200) {
             /* slug already taken: regenerate, up to 5 tries in total */
             if (triesLeft > 1) return attempt(triesLeft - 1);
-            return null;
+            return { url: null, status: null };
           }
-          return null;
+          return { url: null, status: res.status };
         });
       }
       try {
-        return attempt(5).catch(function () { return null; });
+        return attempt(5).catch(function () { return { url: null, status: null }; });
       } catch (e) {
-        return Promise.resolve(null);
+        return Promise.resolve({ url: null, status: null });
       }
     }
     var lastDrawShortUrl = "", lastRecShortUrl = "";
     var drawShortState = "", recShortState = ""; /* "", "creating", "ok", "fail" */
+    var drawShortFailCode = null, recShortFailCode = null;
     var drawShortSeq = 0, recShortSeq = 0;
-    function setShortStatus(el, state) {
+    function shortFailText(status) {
+      var base = t("shortFail");
+      if (!status) return base;
+      var hint = ghHint(status);
+      var detail = t("shortGhResponse") + ": " + status + (hint ? " — " + hint : "");
+      return lang === "ja" ? base + "（" + detail + "）" : base + " (" + detail + ")";
+    }
+    function setShortStatus(el, state, failCode) {
       if (!el) return;
       if (!state) { el.textContent = ""; el.classList.add("hidden"); el.classList.remove("fail"); return; }
       el.classList.remove("hidden");
       if (state === "creating") { el.textContent = t("shortCreating"); el.classList.remove("fail"); }
       else if (state === "ok") { el.textContent = t("shortReady") + " " + t("shortNoteDelay"); el.classList.remove("fail"); }
-      else { el.textContent = t("shortFail"); el.classList.add("fail"); }
+      else { el.textContent = shortFailText(failCode); el.classList.add("fail"); }
     }
     function updateDrawOutputs() {
       if (typeof lastDrawData === "undefined" || !lastDrawData) return;
@@ -1109,7 +1162,7 @@
       if (longEl) longEl.value = longUrl;
       var backup = document.getElementById("draw-backup");
       if (backup) backup.classList.toggle("hidden", !lastDrawShortUrl);
-      setShortStatus(document.getElementById("draw-short-status"), drawShortState);
+      setShortStatus(document.getElementById("draw-short-status"), drawShortState, drawShortFailCode);
     }
     function updateRecOutputs() {
       if (typeof lastRecData === "undefined" || !lastRecData) return;
@@ -1120,30 +1173,32 @@
       if (longEl) longEl.value = longUrl;
       var backup = document.getElementById("rec-backup");
       if (backup) backup.classList.toggle("hidden", !lastRecShortUrl);
-      setShortStatus(document.getElementById("rec-short-status"), recShortState);
+      setShortStatus(document.getElementById("rec-short-status"), recShortState, recShortFailCode);
     }
     /* Kick off short-link creation for a fresh draw / re-draw. Runs in the
        background: the long link is usable immediately either way. */
     function startShortLink(kind, data) {
       var longUrl = inviteUrlFor(data);
       if (!ghToken()) {
-        if (kind === "draw") { drawShortState = "fail"; updateDrawOutputs(); }
-        else { recShortState = "fail"; updateRecOutputs(); }
+        if (kind === "draw") { drawShortState = "fail"; drawShortFailCode = null; updateDrawOutputs(); }
+        else { recShortState = "fail"; recShortFailCode = null; updateRecOutputs(); }
         return;
       }
       var seq;
-      if (kind === "draw") { seq = ++drawShortSeq; drawShortState = "creating"; updateDrawOutputs(); }
-      else { seq = ++recShortSeq; recShortState = "creating"; updateRecOutputs(); }
-      createShortLink(longUrl).then(function (shortUrl) {
+      if (kind === "draw") { seq = ++drawShortSeq; drawShortState = "creating"; drawShortFailCode = null; updateDrawOutputs(); }
+      else { seq = ++recShortSeq; recShortState = "creating"; recShortFailCode = null; updateRecOutputs(); }
+      createShortLink(longUrl).then(function (result) {
+        var shortUrl = result && result.url;
+        var status = result && result.status;
         if (kind === "draw") {
           if (seq !== drawShortSeq) return;
-          if (shortUrl) { lastDrawShortUrl = shortUrl; drawShortState = "ok"; }
-          else drawShortState = "fail";
+          if (shortUrl) { lastDrawShortUrl = shortUrl; drawShortState = "ok"; drawShortFailCode = null; }
+          else { drawShortState = "fail"; drawShortFailCode = status || null; }
           updateDrawOutputs();
         } else {
           if (seq !== recShortSeq) return;
-          if (shortUrl) { lastRecShortUrl = shortUrl; recShortState = "ok"; }
-          else recShortState = "fail";
+          if (shortUrl) { lastRecShortUrl = shortUrl; recShortState = "ok"; recShortFailCode = null; }
+          else { recShortState = "fail"; recShortFailCode = status || null; }
           updateRecOutputs();
         }
       });
@@ -1435,6 +1490,7 @@
       lastDrawData = data;
       lastDrawShortUrl = "";
       drawShortState = "";
+      drawShortFailCode = null;
       drawShortSeq++;
       showErr("err-share", null);
       refreshInviteOutputs();
@@ -1471,6 +1527,7 @@
       lastDrawData = null;
       lastDrawShortUrl = "";
       drawShortState = "";
+      drawShortFailCode = null;
       drawShortSeq++;
       $("draw-ok").classList.remove("show");
       showErr("err-share", null); showErr("err-draw", null); showErr("err-names", null); showErr("err-couples", null);
@@ -1506,6 +1563,36 @@
       $("gh-token-input").value = "";
       refreshTokenUI();
       toast(t("shortTokenDeleted"));
+    });
+    $("gh-token-test").addEventListener("click", function () {
+      buzz(30);
+      var resultEl = $("gh-test-result");
+      function showTest(msg, isFail) {
+        if (!resultEl) return;
+        resultEl.textContent = msg;
+        resultEl.classList.remove("hidden");
+        resultEl.classList.toggle("fail", !!isFail);
+      }
+      var token = ghToken();
+      if (!token) { showTest(t("shortTestNoToken"), true); return; }
+      if (typeof fetch !== "function") { showTest(t("shortTestFailNet"), true); return; }
+      var btn = $("gh-token-test");
+      if (btn) btn.disabled = true;
+      showTest(t("shortTesting"), false);
+      fetch("https://api.github.com/repos/giancuatro/giancuatro.github.io", {
+        method: "GET",
+        headers: ghHeaders(token)
+      }).then(function (res) {
+        if (btn) btn.disabled = false;
+        if (res.ok) { showTest(t("shortTestOk"), false); return; }
+        var hint = ghHint(res.status);
+        var msg = t("shortTestFail").replace("{code}", String(res.status));
+        if (hint) msg += " " + hint;
+        showTest(msg, true);
+      }).catch(function () {
+        if (btn) btn.disabled = false;
+        showTest(t("shortTestFailNet"), true);
+      });
     });
     refreshTokenUI();
 
@@ -1558,6 +1645,7 @@
       lastRecData = data;
       lastRecShortUrl = "";
       recShortState = "";
+      recShortFailCode = null;
       recShortSeq++;
       showErr("err-rec-share", null);
       refreshInviteOutputs();
