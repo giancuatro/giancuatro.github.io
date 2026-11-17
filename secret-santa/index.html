@@ -392,9 +392,6 @@
           <div class="err" id="err-draw"></div>
           <div class="okbox" id="draw-ok">
             <div data-i18n="drawOkMsg"></div>
-            <label class="flabel" for="share-base" data-i18n="shareLinkLabel"></label>
-            <p style="margin:0 0 8px; font-weight:500; font-size:.93rem;" data-i18n="shareLinkHint"></p>
-            <input class="txtin" id="share-base" type="url" data-i18n-ph="shareLinkPh" />
             <label class="flabel" data-i18n="inviteUrlLabel"></label>
             <div class="linkrow">
               <input class="txtin" id="share-url" type="text" readonly />
@@ -403,6 +400,7 @@
             <div class="err" id="err-share"></div>
             <button type="button" class="bigbtn green" id="copy-msg" style="margin-top:12px;" data-i18n="copyMsgBtn"></button>
             <button type="button" class="ghostbtn" id="preview-draw" style="margin-top:10px;" data-i18n="previewBtn"></button>
+            <button type="button" class="ghostbtn" id="new-room" style="margin-top:10px;" data-i18n="newRoomBtn"></button>
             <p style="margin:12px 0 0; font-weight:500; font-size:.93rem;" data-i18n="drawOkNote"></p>
           </div>
         </div>
@@ -546,12 +544,14 @@
         drawOkMsg: "招待リンクができました！",
         drawOkNote: "配り方：「参加用メッセージをコピー」を押して、グループLINEなどに貼って送るだけです。受け取った人は、メッセージの中のリンクを開くだけで封筒の画面が開きます（コードの入力はいりません）。",
         copyBtn: "コピー",
-        shareLinkLabel: "① このページの共有リンク",
-        shareLinkHint: "Museアプリの共有ボタンで、このページのリンクをコピーしてここに貼り付けてください。参加者用の招待リンクが完成します。貼り付けたリンクはこの端末に覚えさせるので、次回からは自動で入ります。",
-        shareLinkPh: "ここに共有リンクを貼り付け",
-        inviteUrlLabel: "② 招待用リンク（参加者用）",
+        shareLinkLabel: "このページのリンク",
+        shareLinkHint: "このページの公開URLから自動で作ります。貼り付けは不要です。",
+        shareLinkPh: "",
+        inviteUrlLabel: "招待用リンク（参加者用）",
         copyUrlBtn: "リンクをコピー",
-        errShareLink: "先に「① このページの共有リンク」を貼り付けてください。アプリの共有ボタンでコピーしたリンクが必要です。",
+        newRoomBtn: "新しい部屋を作る（入力をリセット）",
+        newRoomReady: "新しい部屋を作れます。参加者を入力してください",
+        errShareLink: "招待リンクを作れませんでした。もう一度抽選してください。",
         backToSetup: "← 幹事画面にもどる（確認用プレビュー中）",
         copyMsgBtn: "📩 参加用メッセージをコピー",
         previewBtn: "封筒画面を開いて確かめる",
@@ -635,12 +635,14 @@
         drawOkMsg: "Your invitation link is ready!",
         drawOkNote: "How to share: just tap “Copy the invitation message” and send it to your group chat. Opening the link in the message takes people straight to the envelopes — no code to paste.",
         copyBtn: "Copy",
-        shareLinkLabel: "1) Link to this page",
-        shareLinkHint: "Copy this page's link using the Share button in the Muse app and paste it here. That completes the invitation link. The pasted link is remembered on this device, so next time it is filled in automatically.",
-        shareLinkPh: "Paste the shared link here",
-        inviteUrlLabel: "2) Invitation link (for participants)",
+        shareLinkLabel: "Link to this page",
+        shareLinkHint: "Created automatically from this page's public URL. No pasting needed.",
+        shareLinkPh: "",
+        inviteUrlLabel: "Invitation link (for participants)",
         copyUrlBtn: "Copy link",
-        errShareLink: "Please paste the link to this page first (copied with the app's Share button).",
+        newRoomBtn: "Create a new room (reset the form)",
+        newRoomReady: "Ready for a new room. Enter the participants",
+        errShareLink: "Could not create the invitation link. Please run the draw again.",
         backToSetup: "← Back to the organizer page (preview)",
         copyMsgBtn: "📩 Copy the invitation message",
         previewBtn: "Open the envelope screen to check",
@@ -724,12 +726,14 @@
         drawOkMsg: "¡Tu enlace de invitación está listo!",
         drawOkNote: "Cómo compartir: pulsa «Copiar el mensaje de invitación» y envíalo al chat del grupo. Al abrir el enlace del mensaje se llega directamente a los sobres, sin pegar ningún código.",
         copyBtn: "Copiar",
-        shareLinkLabel: "1) Enlace a esta página",
-        shareLinkHint: "Copia el enlace de esta página con el botón Compartir de la app de Muse y pégalo aquí. Así se completa el enlace de invitación. El enlace pegado se recuerda en este dispositivo, así que la próxima vez aparecerá automáticamente.",
-        shareLinkPh: "Pega aquí el enlace compartido",
-        inviteUrlLabel: "2) Enlace de invitación (para participantes)",
+        shareLinkLabel: "Enlace a esta página",
+        shareLinkHint: "Se crea automáticamente desde la URL pública de esta página. No hay que pegar nada.",
+        shareLinkPh: "",
+        inviteUrlLabel: "Enlace de invitación (para participantes)",
         copyUrlBtn: "Copiar enlace",
-        errShareLink: "Primero pega el enlace a esta página (copiado con el botón Compartir de la app).",
+        newRoomBtn: "Crear una sala nueva (restablecer el formulario)",
+        newRoomReady: "Lista para una sala nueva. Escribe los participantes",
+        errShareLink: "No se pudo crear el enlace de invitación. Vuelve a hacer el sorteo.",
         backToSetup: "← Volver a la página del organizador (vista previa)",
         copyMsgBtn: "📩 Copiar el mensaje de invitación",
         previewBtn: "Abrir la pantalla de sobres para comprobar",
@@ -852,9 +856,17 @@
       }
       return u;
     }
+    var CANONICAL_BASE = "https://giancuatro.github.io/secret-santa/";
+    function effectiveBase() {
+      /* No pasting, ever: invitation links always point at the canonical
+         public address of this page (the GitHub Pages version participants
+         actually open), so the organizer never has to copy or paste any
+         link to create a room. */
+      return CANONICAL_BASE;
+    }
     function inviteUrlFor(data) {
       if (!data) return "";
-      var base = cleanBase(shareBase);
+      var base = effectiveBase();
       if (!/^https?:\/\//.test(base)) return "";
       var code = encodeData(data);
       /* Carry the room in BOTH the query and the fragment: some share shells
@@ -1151,33 +1163,45 @@
       if (!assign) { showErr("err-draw", t("errDrawFail")); return; }
       var data = { v: 1, title: s.title, names: s.names, couples: s.couples, assign: assign };
       lastDrawData = data;
-      var sb = $("share-base");
-      if (sb && !sb.value && shareBase) sb.value = shareBase;
       showErr("err-share", null);
       refreshInviteOutputs();
       $("draw-ok").classList.add("show");
       $("draw-ok").scrollIntoView({ behavior: "smooth", block: "center" });
     });
-    $("share-base").addEventListener("input", function () {
-      shareBase = this.value.trim();
-      try { localStorage.setItem("ss_sharebase", shareBase); } catch (e) {}
-      showErr("err-share", null);
-      refreshInviteOutputs();
-    });
     $("copy-url").addEventListener("click", function () {
       buzz(30);
-      if (!lastDrawData || !inviteUrlFor(lastDrawData)) { showErr("err-share", t("errShareLink")); return; }
+      if (!lastDrawData) return;
+      refreshInviteOutputs();
+      if (!$("share-url").value) { showErr("err-share", t("errShareLink")); return; }
       showErr("err-share", null);
       copyText($("share-url").value, $("share-url"));
     });
     $("copy-msg").addEventListener("click", function () {
       buzz(30);
       if (!lastDrawData) return;
-      if (!inviteUrlFor(lastDrawData)) { showErr("err-share", t("errShareLink")); $("share-base").focus(); return; }
+      refreshInviteOutputs();
+      if (!$("share-url").value) { showErr("err-share", t("errShareLink")); return; }
       showErr("err-share", null);
       copyText(shareMsgFor(lastDrawData), $("share-url"));
     });
     $("preview-draw").addEventListener("click", function () { buzz(30); if (lastDrawData) openRoom(codeFor(lastDrawData), true); });
+    $("new-room").addEventListener("click", function () {
+      buzz(20);
+      lastDrawData = null;
+      $("draw-ok").classList.remove("show");
+      showErr("err-share", null); showErr("err-draw", null); showErr("err-names", null); showErr("err-couples", null);
+      $("share-url").value = "";
+      $("prows").innerHTML = "";
+      for (var ni = 0; ni < 6; ni++) addPersonRow("");
+      $("crows").innerHTML = "";
+      addCoupleRow(); addCoupleRow();
+      var ev = $("evtitle");
+      ev.removeAttribute("data-user-edited");
+      ev.value = t("evTitleDefault");
+      refreshCoupleSelects();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      toast(t("newRoomReady"));
+    });
 
     /* ================= recovery ================= */
     var recData = null, lastRecData = null;
@@ -1233,14 +1257,17 @@
     });
     $("rec-copy-url").addEventListener("click", function () {
       buzz(30);
-      if (!lastRecData || !inviteUrlFor(lastRecData)) { showErr("err-rec-share", t("errShareLink")); return; }
+      if (!lastRecData) return;
+      refreshInviteOutputs();
+      if (!$("rec-share-url").value) { showErr("err-rec-share", t("errShareLink")); return; }
       showErr("err-rec-share", null);
       copyText($("rec-share-url").value, $("rec-share-url"));
     });
     $("rec-copy-msg").addEventListener("click", function () {
       buzz(30);
       if (!lastRecData) return;
-      if (!inviteUrlFor(lastRecData)) { showErr("err-rec-share", t("errShareLink")); return; }
+      refreshInviteOutputs();
+      if (!$("rec-share-url").value) { showErr("err-rec-share", t("errShareLink")); return; }
       showErr("err-rec-share", null);
       copyText(shareMsgFor(lastRecData), $("rec-share-url"));
     });
@@ -1441,7 +1468,6 @@
     /* ================= init ================= */
     for (var pi = 0; pi < 6; pi++) addPersonRow("");
     addCoupleRow(); addCoupleRow();
-    if (shareBase) $("share-base").value = shareBase;
     showView();
     applyLang();
     </script>
